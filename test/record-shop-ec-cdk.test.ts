@@ -35,3 +35,22 @@ test('VPCにNATゲートウェイが1個だけ作られる(コスト最小化)',
 
   template.resourceCountIs('AWS::EC2::NatGateway', 1);
 });
+
+test('CloudFrontがALBの前段に1つ作られ、HTTPSへリダイレクトする', () => {
+  const template = synthesize();
+
+  template.resourceCountIs('AWS::CloudFront::Distribution', 1);
+  template.hasResourceProperties('AWS::CloudFront::Distribution', {
+    DistributionConfig: {
+      DefaultCacheBehavior: {
+        ViewerProtocolPolicy: 'redirect-to-https',
+      },
+    },
+  });
+});
+
+test('管理者パスワード用のSecrets Managerシークレットが作られる', () => {
+  const template = synthesize();
+
+  template.resourceCountIs('AWS::SecretsManager::Secret', 2); // RDS用 + Admin用
+});
