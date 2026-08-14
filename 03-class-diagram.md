@@ -1,13 +1,7 @@
 # クラス図
 
-ドメイン層(`domain/**`)の主要クラスを、コンテキストごとに示す。Web層・永続化層(JPA/MyBatis)は
+ドメイン層(`domain/**`)の主要クラスを、コンテキストごとに示す。Web層・永続化層(MyBatis)は
 含めない(対応関係は [02-er-diagram.md](02-er-diagram.md) を参照)。
-
-`record-shop-ec-jpa`(JPA版)・`record-shop-ec-mybatis`(MyBatis版)ともにドメイン層は
-元は無修正コピーで完全に同一のため、以下のクラス図はどちらのバージョンにもそのまま当てはまる。
-
-> **例外**: `Release`/`Pressing`の`artworkUrl`(ジャケット画像URL)関連のフィールド・メソッドは
-> **MyBatis版にのみ**追加した比較実験の枠を超えるアプリケーション機能。JPA版のクラスには存在しない。
 
 ## Catalog コンテキスト
 
@@ -20,13 +14,13 @@ classDiagram
         -Set~String~ genres
         -int originalReleaseYear
         -List~Pressing~ pressings
-        -String artworkUrl※MyBatis版のみ
+        -String artworkUrl
         +register(...)$ Release
         +reconstitute(...)$ Release
         +addPressing(...) Pressing
         +findPressing(PressingId) Optional~Pressing~
-        +changeArtworkUrl(String)※MyBatis版のみ
-        +changePressingArtworkUrl(PressingId, String)※MyBatis版のみ
+        +changeArtworkUrl(String)
+        +changePressingArtworkUrl(PressingId, String)
     }
     class Pressing {
         -PressingId pressingId
@@ -37,7 +31,7 @@ classDiagram
         -String matrixRunout
         -boolean reissue
         -Format format
-        -String artworkUrl※MyBatis版のみ
+        -String artworkUrl
         +identityKey() String
     }
     class Format {

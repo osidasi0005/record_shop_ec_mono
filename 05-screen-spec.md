@@ -1,19 +1,13 @@
 # 画面仕様書
 
-`record-shop-ec-jpa`の全画面(Thymeleafでレンダリングされるブラウザ向け画面)と、
+`record-shop-ec-mybatis`の全画面(Thymeleafでレンダリングされるブラウザ向け画面)と、
 参考としてREST API(`/api/**`)のURL一覧をまとめる。認証要否は
-[`SecurityConfig`](../record-shop-ec-jpa/src/main/java/com/example/recordshop/config/SecurityConfig.java)
+[`SecurityConfig`](../record-shop-ec-mybatis/src/main/java/com/example/recordshop/config/SecurityConfig.java)
 の設定に基づく。スクリーンショットは実際にデプロイ済みのCloudFront URLから撮影した
 (データはテスト用: `Kind of Blue` / Miles Davis を購入した状態)。
 
-> Web層(`web/**`・`config/**`・テンプレート一式)は`record-shop-ec-mybatis`にも元は無修正で
-> コピーされており、URL・入力項目・権限・見た目は**基本的にMyBatis版でも同一**(永続化層
-> だけがJPA/MyBatisで異なる)。スクリーンショットはJPA版で撮影したものだが、大半の画面は
-> MyBatis版でも同じ見た目になる。
->
-> **例外**: ジャケット画像URL(`artworkUrl`)の登録・変更・表示は比較実験の枠を超える
-> アプリケーション機能として**MyBatis版にのみ**追加した。JPA版の画面には存在しない
-> (対応するスクリーンショットも未取得)。該当箇所は本ドキュメント内で個別に注記する。
+> ジャケット画像URL(`artworkUrl`)の登録・変更・表示機能は後から追加したため、既存の
+> スクリーンショットには反映されていない。該当箇所は本ドキュメント内で個別に注記する。
 
 ## URL一覧(早見表)
 
@@ -37,8 +31,8 @@
 | 16 | `/admin/releases/{id}/pressings` | POST | プレス版追加 | 要ROLE_ADMIN |
 | 17 | `/admin/listings` | POST | 出品(Listing)作成 | 要ROLE_ADMIN |
 | 18 | `/admin/listings/{id}/publish` | POST | 出品を公開 | 要ROLE_ADMIN |
-| 19 | `/admin/releases/{id}/artwork` | POST | 作品全体のジャケット画像URLを設定・変更(MyBatis版のみ) | 要ROLE_ADMIN |
-| 20 | `/admin/releases/{id}/pressings/{pressingId}/artwork` | POST | プレス版ごとのジャケット画像URLを設定・変更(MyBatis版のみ) | 要ROLE_ADMIN |
+| 19 | `/admin/releases/{id}/artwork` | POST | 作品全体のジャケット画像URLを設定・変更 | 要ROLE_ADMIN |
+| 20 | `/admin/releases/{id}/pressings/{pressingId}/artwork` | POST | プレス版ごとのジャケット画像URLを設定・変更 | 要ROLE_ADMIN |
 
 `/error`, `/css/**`, `/js/**`, `/webjars/**`, `/actuator/health` も`permitAll`だが、
 エンドユーザー向け画面ではないためここでは割愛する。
@@ -51,9 +45,9 @@
 
 | URL | メソッド | 概要 |
 |---|---|---|
-| `/api/releases` | POST | Release登録(MyBatis版はリクエストボディに`artworkUrl`も含む) |
+| `/api/releases` | POST | Release登録(リクエストボディに`artworkUrl`も含む) |
 | `/api/releases/{releaseId}` | GET | Release取得 |
-| `/api/releases/{releaseId}/pressings` | POST | Pressing追加(MyBatis版はリクエストボディに`artworkUrl`も含む) |
+| `/api/releases/{releaseId}/pressings` | POST | Pressing追加(リクエストボディに`artworkUrl`も含む) |
 | `/api/listings` | POST | Listing作成 |
 | `/api/listings/{listingId}/publish` | POST | Listing公開 |
 | `/api/listings/{listingId}` | GET | Listing取得 |
@@ -74,7 +68,7 @@
 
 公開済み(`PUBLISHED`)のListingを持つReleaseを一覧表示する。
 
-> **MyBatis版のみ**: 管理画面で設定済みならジャケット画像のサムネイルを表示する。
+> 管理画面で設定済みならジャケット画像のサムネイルを表示する。
 
 ![商品一覧](images/02-catalog-list.png)
 
@@ -83,8 +77,8 @@
 Releaseに紐づくPressingごとに、公開済みListing(コンディション・価格・在庫)を表示し、
 「カートに追加」フォームを持つ。
 
-> **MyBatis版のみ**: 作品全体のジャケット画像(大きいサイズ)と、プレス版ごとに個別設定されて
-> いれば版ごとのジャケット画像も表示する。
+> 作品全体のジャケット画像(大きいサイズ)と、プレス版ごとに個別設定されていれば
+> 版ごとのジャケット画像も表示する。
 
 ![商品詳細](images/03-catalog-detail.png)
 
@@ -155,15 +149,13 @@ Releaseに紐づくPressingごとに、公開済みListing(コンディション
 ### 11. 管理画面: 作品新規登録 `/admin/releases/new`
 
 入力項目: タイトル(`title`)、アーティスト(`artistName`)、ジャンル(`genres`、カンマ区切り文字列)、
-発売年(`originalReleaseYear`)。
-
-> **MyBatis版のみ**: ジャケット画像URL(`artworkUrl`、任意項目)の入力欄がある。
+発売年(`originalReleaseYear`)、ジャケット画像URL(`artworkUrl`、任意項目)。
 
 ![管理画面: 作品新規登録](images/11-admin-releases-new.png)
 
 ### 12. 管理画面: 作品詳細(プレス版・出品管理) `/admin/releases/{id}`
 
-1画面に3つの機能を集約している:
+1画面に以下の機能を集約している:
 
 1. 登録済みPressingごとのListing一覧表示・公開ボタン(`POST /admin/listings/{id}/publish`)
 2. Listing新規作成フォーム(`POST /admin/listings`) ―
@@ -173,14 +165,11 @@ Releaseに紐づくPressingごとに、公開済みListing(コンディション
 3. Pressing新規追加フォーム(`POST /admin/releases/{id}/pressings`) ―
    入力項目: レーベル名(`labelName`)、品番(`catalogNumber`)、製造国(`country`)、
    プレス年(`pressYear`)、マトリクス番号(`matrixRunout`、任意)、再発盤か(`reissue`)、
-   媒体(`mediaType`)、回転数(`speed`)、枚数(`discCount`)
-
-> **MyBatis版のみ**: 以下のジャケット画像管理機能を追加している。
-> 4. 作品全体のジャケット画像URL設定・変更フォーム(`POST /admin/releases/{id}/artwork`)。
->    現在の画像プレビューと入力欄(`artworkUrl`)を持つ
-> 5. プレス版ごとのジャケット画像URL設定・変更フォーム(`POST /admin/releases/{id}/pressings/{pressingId}/artwork`、
->    折りたたみ表示)。再発盤ごとにジャケットデザインが異なるケースに対応する
-> 6. Pressing新規追加フォーム(上記3)にもジャケット画像URL(`artworkUrl`、任意項目)の入力欄が追加されている
+   媒体(`mediaType`)、回転数(`speed`)、枚数(`discCount`)、ジャケット画像URL(`artworkUrl`、任意)
+4. 作品全体のジャケット画像URL設定・変更フォーム(`POST /admin/releases/{id}/artwork`)。
+   現在の画像プレビューと入力欄(`artworkUrl`)を持つ
+5. プレス版ごとのジャケット画像URL設定・変更フォーム(`POST /admin/releases/{id}/pressings/{pressingId}/artwork`、
+   折りたたみ表示)。再発盤ごとにジャケットデザインが異なるケースに対応する
 
 ![管理画面: 作品詳細](images/12-admin-release-detail.png)
 
