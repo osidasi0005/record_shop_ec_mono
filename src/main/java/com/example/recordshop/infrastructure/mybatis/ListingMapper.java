@@ -16,8 +16,7 @@ public interface ListingMapper {
     List<ListingRow> selectByPressingId(@Param("pressingId") UUID pressingId);
 
     /**
-     * 楽観ロック付きUPDATE。WHERE句にversionを含め、影響行数で競合を検知する
-     * (JPAの{@code @Version}が自動でやっていることを、ここでは自前で実装している)。
+     * 楽観ロック付きUPDATE。WHERE句にversionを含め、影響行数で競合を検知する。
      *
      * @return 更新できた行数。0なら楽観ロック競合(他のトランザクションが先に更新済み)。
      */

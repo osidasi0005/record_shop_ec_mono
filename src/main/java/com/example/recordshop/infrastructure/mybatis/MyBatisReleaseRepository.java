@@ -24,16 +24,13 @@ import java.util.stream.Collectors;
 /**
  * {@link ReleaseRepository}(ドメイン層のポート)のMyBatisアダプタ実装。
  *
- * <p>JPA版({@code JpaReleaseRepository})との一番の違いはここ。JPAは
- * {@code @OneToMany}/{@code @ElementCollection}の設定さえすれば、集約全体の組み立てを
- * フレームワークが自動でやってくれる。MyBatisにはその仕組みが無いため、「本体」「genres」
+ * <p>MyBatisには集約全体の組み立てを自動でやってくれる仕組みが無いため、「本体」「genres」
  * 「pressings」を別々のSELECTで取得し、{@code toDomain}系のメソッドで手動で組み立てている。
  *
  * <p>{@link #findAll()} は、Release件数分ループして{@link #findById(ReleaseId)}を呼ぶ
- * 素朴な実装にすると、JPA版で見つかったのと全く同じN+1問題がMyBatisでも再現する。
- * それを避けるため、genres/pressingsは常に「全件を1回のSELECTで取得してJava側でグルーピングする」
- * という書き方を徹底している。つまりMyBatisはN+1を自動では防いでくれず、
- * 「N+1を避けた書き方をする責任」がJPA以上にはっきりと開発者側にある。
+ * 素朴な実装にするとN+1問題が発生する。それを避けるため、genres/pressingsは常に
+ * 「全件を1回のSELECTで取得してJava側でグルーピングする」という書き方を徹底している。
+ * MyBatisはN+1を自動では防いでくれず、「N+1を避けた書き方をする責任」が開発者側にある。
  */
 @Repository
 public class MyBatisReleaseRepository implements ReleaseRepository {
@@ -51,10 +48,9 @@ public class MyBatisReleaseRepository implements ReleaseRepository {
         ReleaseRow row = new ReleaseRow(releaseId, release.title(), release.artistName(),
                 release.originalReleaseYear(), release.artworkUrl());
 
-        // JPAならdirty checkingが自動でやってくれる「新規か更新か」の判定を、ここでは
-        // 明示的なSELECTで自分の手で行う必要がある。addPressing()等で集約が変化した後の
-        // 再saveがこの分岐を通り、子コレクション(genres/pressings)は全delete→re-insertで
-        // 最新の状態に揃える(MyBatisにはJPAの@OneToMany cascadeに相当する自動反映が無いため)。
+        // 「新規か更新か」の判定を、明示的なSELECTで行う必要がある(dirty checkingが無いため)。
+        // addPressing()等で集約が変化した後の再saveがこの分岐を通り、子コレクション
+        // (genres/pressings)は全delete→re-insertで最新の状態に揃える。
         boolean isNew = mapper.selectReleaseById(releaseId) == null;
         if (isNew) {
             mapper.insertRelease(row);

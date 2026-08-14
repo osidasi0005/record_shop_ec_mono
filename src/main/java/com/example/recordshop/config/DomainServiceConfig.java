@@ -17,8 +17,7 @@ import org.springframework.context.annotation.Configuration;
  * (ドメイン層自体に {@code @Service} 等のアノテーションは付けない)
  *
  * <p>各Repositoryインターフェースの実装はSpringが自動でMyBatisアダプタ({@code infrastructure/mybatis}
- * 配下)を注入する。JPA版とこのファイルが一字一句同じなのは、ドメイン層・DIの境界が
- * 永続化技術に一切依存していないことの裏付けでもある。
+ * 配下)を注入する。このファイル自体は永続化技術に一切依存していない。
  */
 @Configuration
 public class DomainServiceConfig {

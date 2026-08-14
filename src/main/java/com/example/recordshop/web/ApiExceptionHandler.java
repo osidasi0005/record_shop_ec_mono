@@ -33,11 +33,9 @@ public class ApiExceptionHandler {
      * 楽観ロック競合(同じ Listing 等を複数リクエストが同時に更新しようとした) → 409 Conflict。
      * クライアント側は「売り切れました。もう一度お試しください」等の案内をして再試行を促す想定。
      *
-     * <p>JPA版は{@code ObjectOptimisticLockingFailureException}(Hibernate固有のサブクラス)を
-     * 捕まえるが、{@link com.example.recordshop.infrastructure.mybatis.MyBatisListingRepository}は
-     * その基底クラスである{@link OptimisticLockingFailureException}を直接投げる実装のため、
-     * こちらを捕まえるよう変更している。基底クラスを使う分、実はこちらの方が特定の永続化技術に
-     * 依存しない書き方になっている。
+     * <p>{@link com.example.recordshop.infrastructure.mybatis.MyBatisListingRepository}は
+     * Spring基底クラスの{@link OptimisticLockingFailureException}を直接投げる実装のため、
+     * こちらを捕まえる。特定の永続化技術に依存しない汎用的な書き方になっている。
      */
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleOptimisticLock(OptimisticLockingFailureException e) {

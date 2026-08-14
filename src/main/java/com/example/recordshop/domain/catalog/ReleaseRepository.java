@@ -5,7 +5,7 @@ import java.util.Optional;
 
 /**
  * Release 集約の永続化ポート(インターフェースのみ)。
- * 実装(JPA/JDBC など)はインフラ層で提供する。
+ * 実装(MyBatisアダプタ)はインフラ層で提供する。
  */
 public interface ReleaseRepository {
 

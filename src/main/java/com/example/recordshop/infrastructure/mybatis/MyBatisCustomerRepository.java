@@ -13,7 +13,7 @@ import java.util.Optional;
 /**
  * {@link CustomerRepository}(ドメイン層のポート)のMyBatisアダプタ実装。
  * emailの一意性はDB側のUNIQUE制約でも保証されるが、{@link CustomerRegistrationService}が
- * 事前にexistsByEmailでチェックする設計は変えていない(JPA版と同じ二重の安全網)。
+ * 事前にexistsByEmailでチェックする設計にもなっている(二重の安全網)。
  */
 @Repository
 public class MyBatisCustomerRepository implements CustomerRepository {

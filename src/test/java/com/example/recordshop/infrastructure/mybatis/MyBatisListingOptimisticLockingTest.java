@@ -24,15 +24,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * record-shop-ec-jpa(JPA版)の {@code ListingOptimisticLockingTest} と全く同じシナリオを、
- * MyBatis版({@link MyBatisListingRepository})で検証する。
+ * 複数トランザクションが同じListingを同時に更新しようとした場合の楽観ロック競合を、
+ * {@link MyBatisListingRepository}で検証する。
  *
- * <p>JPA版との一番の違いは、versionの管理を{@link MyBatisListingRepository}内の
- * {@code ThreadLocal}で手動再現している点。この仕組みが正しく機能していれば、
- * JPA版と同じく「片方だけ成功し、もう片方は楽観ロック競合で失敗する」という結果になるはずである。
+ * <p>versionの管理は{@link MyBatisListingRepository}内の{@code ThreadLocal}で手動再現している。
+ * この仕組みが正しく機能していれば、「片方だけ成功し、もう片方は楽観ロック競合で失敗する」
+ * という結果になるはずである。
  *
- * <p>クラスに{@code @Transactional}を付けない点はJPA版と同じ理由(別トランザクションでの
- * 競合を再現するため、{@link TransactionTemplate}で明示的にトランザクションを分ける)。
+ * <p>クラスに{@code @Transactional}を付けないのは、別トランザクションでの競合を再現するため
+ * ({@link TransactionTemplate}で明示的にトランザクションを分ける)。
  */
 @SpringBootTest
 class MyBatisListingOptimisticLockingTest {

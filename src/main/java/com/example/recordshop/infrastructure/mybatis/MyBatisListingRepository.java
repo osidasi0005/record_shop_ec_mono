@@ -21,13 +21,12 @@ import java.util.Optional;
 /**
  * {@link ListingRepository} のMyBatisアダプタ実装。
  *
- * <p>JPAの{@code @Version}は「読み込んだ時点のversionを永続化コンテキストが自動で覚えておき、
- * 保存時のUPDATE文にWHERE version = ?として自動で使う」という仕組みだが、MyBatisには
- * この「読み込んだ状態を覚えておく」永続化コンテキストに相当するものが無い。
+ * <p>楽観ロックには「読み込んだ時点のversionを覚えておき、保存時のUPDATE文に
+ * WHERE version = ?として使う」仕組みが必要だが、MyBatisにはこれを自動でやってくれる
+ * 永続化コンテキストに相当するものが無い。
  *
  * <p>ここでは{@link ThreadLocal}で「このスレッド(=通常は1リクエストの処理スレッド)が
- * findByIdで読み込んだversionの一時記録」を手動で再現している。これはJPAが裏で自動で
- * やっていることを自分の手で書く必要がある、MyBatis利用時の代表的なトレードオフの実例。
+ * findByIdで読み込んだversionの一時記録」を手動で再現している。
  *
  * <p><b>既知の簡略化</b>: このThreadLocalは、リクエストの完了時に自動でクリアされる
  * 保証が無い(Servletコンテナのスレッドプールで使い回されるため)。本番運用するなら

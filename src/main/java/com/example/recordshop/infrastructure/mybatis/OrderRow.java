@@ -5,7 +5,7 @@ import java.util.UUID;
 
 /**
  * ordersテーブルの1行に対応するDTO。ドメインの{@code Order}とは別物。
- * JPA版の{@code @Embedded Address}に相当する住所は、JPA版と同じく列展開して持つ。
+ * 住所(Address値オブジェクト)は列展開して持つ。
  */
 public record OrderRow(
         UUID id, UUID customerId, String status, Instant placedAt,

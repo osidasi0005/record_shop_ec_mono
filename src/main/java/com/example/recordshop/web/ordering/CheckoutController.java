@@ -33,9 +33,8 @@ import java.util.List;
  * {@link com.example.recordshop.domain.payment.Payment} 自体が「Captureは常に即成功」という
  * 擬似実装のため、チェックアウト=購入完了という単純なUXにしている)。
  *
- * <p>楽観ロック競合の捕捉は、JPA版の{@code ObjectOptimisticLockingFailureException}ではなく
- * その基底クラス{@link OptimisticLockingFailureException}を使う({@link com.example.recordshop.web.ApiExceptionHandler}
- * と同じ理由)。
+ * <p>楽観ロック競合の捕捉は、Spring基底クラスの{@link OptimisticLockingFailureException}を使う
+ * ({@link com.example.recordshop.web.ApiExceptionHandler}と同じ理由)。
  */
 @Controller
 public class CheckoutController {

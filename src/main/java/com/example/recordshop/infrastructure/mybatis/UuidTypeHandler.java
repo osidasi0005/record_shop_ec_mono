@@ -13,11 +13,10 @@ import java.util.UUID;
 /**
  * {@link UUID} <-> DBのUUID列を変換するTypeHandler。
  *
- * <p>JPA(Hibernate)は{@code UUID}型の列を自動で扱ってくれるが、MyBatisはこの変換を
- * デフォルトでは持っていない({@code TypeHandlerRegistry}にUUID用の登録が無い)。
+ * <p>MyBatisは{@code UUID}型の変換をデフォルトでは持っていない
+ * ({@code TypeHandlerRegistry}にUUID用の登録が無い)。
  * このクラスが無いと、resultMapの構築時に
  * "No typehandler found for property null" というエラーで起動しない。
- * これもJPAが裏で自動化していることを、MyBatisでは自分で用意する必要がある一例。
  */
 @MappedTypes(UUID.class)
 public class UuidTypeHandler extends BaseTypeHandler<UUID> {

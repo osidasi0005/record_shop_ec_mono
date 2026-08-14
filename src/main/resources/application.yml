@@ -1,18 +1,17 @@
-# server.forward-headers-strategy はあえて使わない(=デフォルトのnone)。record-shop-ec-jpa(JPA版)と
-# 同じ理由: CloudFront(HTTPS)→ALB→Fargate(HTTP)構成ではALBがX-Forwarded-Protoを毎回上書きしてしまうため、
-# 代わりにCloudFrontProtoFilter(infrastructure.web、JPA版から無修正コピー)でscheme/isSecureを直接上書きする。
+# server.forward-headers-strategy はあえて使わない(=デフォルトのnone)。
+# CloudFront(HTTPS)→ALB→Fargate(HTTP)構成ではALBがX-Forwarded-Protoを毎回上書きしてしまうため、
+# 代わりにCloudFrontProtoFilter(infrastructure.web)でscheme/isSecureを直接上書きする。
 
 spring:
   application:
     name: record-shop-ec-mybatis
   datasource:
-    # record-shop-ec-jpa(JPA版)と同時起動できるよう、ポート・DB名をずらしている(docker-compose.yml参照)
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:recordshop_mybatis}
     username: ${DB_USERNAME:recordshop}
     password: ${DB_PASSWORD:recordshop}
   sql:
     init:
-      # 比較実験用の簡略化: 起動のたびにschema.sqlでテーブルを作り直す(データは永続化しない)
+      # 簡略化のため、起動のたびにschema.sqlでテーブルを作り直す(データは永続化しない)
       mode: always
 
 mybatis:

@@ -35,7 +35,7 @@ import java.util.UUID;
  *
  * <p>{@link #save(Order)} は新規登録・更新の両方に対応する。決済確定(markPaid)等で
  * 既存Orderのstatusが変わった後の再saveは、既存行の有無をSELECTで判定してUPDATEに振り分ける
- * (JPAならdirty checkingが自動でやることを、ここでは明示的に書く必要がある)。
+ * (dirty checkingが無いMyBatisでは、この判定を明示的に書く必要がある)。
  */
 @Repository
 public class MyBatisOrderRepository implements OrderRepository {

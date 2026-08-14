@@ -1,6 +1,5 @@
--- record-shop-ec-mybatis の比較実験用スキーマ。
--- 対象はCatalog(releases/pressings/release_genres)とInventory(listings)のみ。
--- 比較実験用のため、起動のたびに作り直す(DROP→CREATE)。データの永続化は目的外。
+-- record-shop-ec-mybatis のスキーマ定義。
+-- 簡略化のため、起動のたびに作り直す(DROP→CREATE)。データの永続化は目的外。
 
 DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS order_lines CASCADE;
@@ -19,14 +18,14 @@ CREATE TABLE releases (
     artwork_url           VARCHAR(1000)
 );
 
--- JPA版の@ElementCollectionに相当。ジャンルはReleaseの値の集合であり独立エンティティではない。
+-- ジャンルはRelease自身が持つ値の集合であり、独立したエンティティではない。
 CREATE TABLE release_genres (
     release_id UUID        NOT NULL REFERENCES releases (id) ON DELETE CASCADE,
     genre      VARCHAR(50) NOT NULL,
     PRIMARY KEY (release_id, genre)
 );
 
--- JPA版の@OneToMany(cascade=ALL, orphanRemoval=true)に相当。同一集約内の親子。
+-- Release集約内の親子。Releaseが消えればPressingも連動して消える(CASCADE)。
 CREATE TABLE pressings (
     id             UUID PRIMARY KEY,
     release_id     UUID         NOT NULL REFERENCES releases (id) ON DELETE CASCADE,
@@ -44,7 +43,7 @@ CREATE TABLE pressings (
 );
 
 -- versionはMyBatisでは自動付与されないため、UPDATE文側で明示的にWHERE version = ?と
--- version = version + 1を書いて楽観ロックを手動実装する(JPAの@Versionに相当)。
+-- version = version + 1を書いて楽観ロックを手動実装する。
 CREATE TABLE listings (
     id              UUID           PRIMARY KEY,
     pressing_id     UUID           NOT NULL,
@@ -60,7 +59,7 @@ CREATE TABLE listings (
 );
 
 -- customer_idはCustomer(未移植の別集約)への参照のため、listingsのpressing_idと同様
--- ただのUUID列として持たせる(FK・JOINは張らない)。住所はJPA版の@Embeddedと同じく列展開する。
+-- ただのUUID列として持たせる(FK・JOINは張らない)。住所は列展開して持つ。
 CREATE TABLE orders (
     id                     UUID           PRIMARY KEY,
     customer_id            UUID           NOT NULL,
@@ -80,7 +79,7 @@ CREATE TABLE orders (
     bill_country           VARCHAR(2)     NOT NULL
 );
 
--- JPA版の@ElementCollection(order_lines)に相当。PressingSnapshotは確定時点の複製であり
+-- Order自身が持つ一部(値の集合)。PressingSnapshotは確定時点の複製であり
 -- releases/pressingsとは無関係な独立した非正規化データなので、列をそのまま展開する。
 CREATE TABLE order_lines (
     order_id             UUID           NOT NULL REFERENCES orders (id) ON DELETE CASCADE,

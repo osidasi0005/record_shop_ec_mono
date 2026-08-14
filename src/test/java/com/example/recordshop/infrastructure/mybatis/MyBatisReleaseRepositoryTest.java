@@ -16,7 +16,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * MyBatisアダプタの結合テスト。JPA版({@code JpaReleaseRepositoryTest})と同じ観点を検証しつつ、
+ * MyBatisアダプタの結合テスト。
  * {@link ReleaseMapper}が genres/pressings を正しく組み立てられているかを重点的に確認する。
  */
 @SpringBootTest
