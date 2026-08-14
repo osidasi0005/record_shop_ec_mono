@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.recordshop.infrastructure.mybatis.OrderMapper">
+
+    <resultMap id="orderRowMap" type="com.example.recordshop.infrastructure.mybatis.OrderRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"/>
+            <arg column="customer_id" javaType="java.util.UUID"/>
+            <arg column="status" javaType="string"/>
+            <arg column="placed_at" javaType="java.time.Instant"/>
+            <arg column="ship_recipient_name" javaType="string"/>
+            <arg column="ship_postal_code" javaType="string"/>
+            <arg column="ship_prefecture" javaType="string"/>
+            <arg column="ship_city" javaType="string"/>
+            <arg column="ship_address_line" javaType="string"/>
+            <arg column="ship_country" javaType="string"/>
+            <arg column="bill_recipient_name" javaType="string"/>
+            <arg column="bill_postal_code" javaType="string"/>
+            <arg column="bill_prefecture" javaType="string"/>
+            <arg column="bill_city" javaType="string"/>
+            <arg column="bill_address_line" javaType="string"/>
+            <arg column="bill_country" javaType="string"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="orderLineRowMap" type="com.example.recordshop.infrastructure.mybatis.OrderLineRow">
+        <constructor>
+            <idArg column="order_id" javaType="java.util.UUID"/>
+            <arg column="listing_id" javaType="java.util.UUID"/>
+            <arg column="release_title" javaType="string"/>
+            <arg column="artist_name" javaType="string"/>
+            <arg column="label_name" javaType="string"/>
+            <arg column="catalog_number" javaType="string"/>
+            <arg column="pressing_country" javaType="string"/>
+            <arg column="press_year" javaType="_int"/>
+            <arg column="media_type" javaType="string"/>
+            <arg column="speed" javaType="string"/>
+            <arg column="disc_count" javaType="_int"/>
+            <arg column="condition_type" javaType="string"/>
+            <arg column="vinyl_grade" javaType="string"/>
+            <arg column="sleeve_grade" javaType="string"/>
+            <arg column="unit_price_amount" javaType="java.math.BigDecimal"/>
+            <arg column="unit_price_currency" javaType="string"/>
+            <arg column="quantity" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertOrder" parameterType="com.example.recordshop.infrastructure.mybatis.OrderRow">
+        INSERT INTO orders (id, customer_id, status, placed_at,
+                             ship_recipient_name, ship_postal_code, ship_prefecture, ship_city, ship_address_line, ship_country,
+                             bill_recipient_name, bill_postal_code, bill_prefecture, bill_city, bill_address_line, bill_country)
+        VALUES (#{id}, #{customerId}, #{status}, #{placedAt},
+                #{shipRecipientName}, #{shipPostalCode}, #{shipPrefecture}, #{shipCity}, #{shipAddressLine}, #{shipCountry},
+                #{billRecipientName}, #{billPostalCode}, #{billPrefecture}, #{billCity}, #{billAddressLine}, #{billCountry})
+    </insert>
+
+    <insert id="insertOrderLine" parameterType="com.example.recordshop.infrastructure.mybatis.OrderLineRow">
+        INSERT INTO order_lines (order_id, listing_id, release_title, artist_name, label_name, catalog_number,
+                                  pressing_country, press_year, media_type, speed, disc_count, condition_type,
+                                  vinyl_grade, sleeve_grade, unit_price_amount, unit_price_currency, quantity)
+        VALUES (#{orderId}, #{listingId}, #{releaseTitle}, #{artistName}, #{labelName}, #{catalogNumber},
+                #{pressingCountry}, #{pressYear}, #{mediaType}, #{speed}, #{discCount}, #{conditionType},
+                #{vinylGrade}, #{sleeveGrade}, #{unitPriceAmount}, #{unitPriceCurrency}, #{quantity})
+    </insert>
+
+    <select id="selectOrderById" resultMap="orderRowMap">
+        SELECT id, customer_id, status, placed_at,
+               ship_recipient_name, ship_postal_code, ship_prefecture, ship_city, ship_address_line, ship_country,
+               bill_recipient_name, bill_postal_code, bill_prefecture, bill_city, bill_address_line, bill_country
+        FROM orders WHERE id = #{id}
+    </select>
+
+    <select id="selectOrderLinesByOrderId" resultMap="orderLineRowMap">
+        SELECT order_id, listing_id, release_title, artist_name, label_name, catalog_number, pressing_country,
+               press_year, media_type, speed, disc_count, condition_type, vinyl_grade, sleeve_grade,
+               unit_price_amount, unit_price_currency, quantity
+        FROM order_lines WHERE order_id = #{orderId}
+    </select>
+
+    <select id="selectOrdersByCustomerId" resultMap="orderRowMap">
+        SELECT id, customer_id, status, placed_at,
+               ship_recipient_name, ship_postal_code, ship_prefecture, ship_city, ship_address_line, ship_country,
+               bill_recipient_name, bill_postal_code, bill_prefecture, bill_city, bill_address_line, bill_country
+        FROM orders WHERE customer_id = #{customerId} ORDER BY placed_at DESC
+    </select>
+
+    <select id="selectOrderLinesByOrderIds" resultMap="orderLineRowMap">
+        SELECT order_id, listing_id, release_title, artist_name, label_name, catalog_number, pressing_country,
+               press_year, media_type, speed, disc_count, condition_type, vinyl_grade, sleeve_grade,
+               unit_price_amount, unit_price_currency, quantity
+        FROM order_lines
+        WHERE order_id IN
+        <foreach item="orderId" collection="orderIds" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </select>
+
+</mapper>
