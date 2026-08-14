@@ -1,6 +1,7 @@
 package com.example.recordshop.config;
 
 import com.example.recordshop.infrastructure.web.CloudFrontProtoFilter;
+import com.example.recordshop.infrastructure.web.NoIndexHeaderFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,15 @@ public class WebConfig {
         FilterRegistrationBean<CloudFrontProtoFilter> registration =
                 new FilterRegistrationBean<>(new CloudFrontProtoFilter());
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return registration;
+    }
+
+    /** 学習・デモ用サイトを検索エンジンにインデックスさせないためのヘッダー付与。 */
+    @Bean
+    public FilterRegistrationBean<NoIndexHeaderFilter> noIndexHeaderFilter() {
+        FilterRegistrationBean<NoIndexHeaderFilter> registration =
+                new FilterRegistrationBean<>(new NoIndexHeaderFilter());
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return registration;
     }
 }
