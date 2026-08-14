@@ -1,12 +1,12 @@
 # record-shop-ec-mybatis
 
-[record-shop-ec-domain](../record-shop-ec-domain)(JPA版)からドメイン層・Web層をそのままコピーし、
+[record-shop-ec-jpa](../record-shop-ec-jpa)(JPA版)からドメイン層・Web層をそのままコピーし、
 永続化層だけをMyBatisで実装した比較実験用プロジェクト。JPA vs MyBatisの体感差を、
 同じドメインモデル・同じ問題設定(N+1回避、楽観ロック)の上で比較することが目的。
 
 ## スコープ
 
-- **ドメイン層(`domain/`)は record-shop-ec-domain と完全に同一**(無修正コピー)。
+- **ドメイン層(`domain/`)は record-shop-ec-jpa と完全に同一**(無修正コピー)。
   Catalog(Release/Pressing/genres)・Inventory(Listing)・Ordering(Cart/Order/OrderLine)・
   Payment(Payment)・Customer(Customer)の全5集約
 - **Web層(`web/`・`config/`・`infrastructure/security`)もJPA版から無修正コピー**。
@@ -48,11 +48,11 @@
 ./mvnw test
 ```
 
-Dockerが無くてもH2(PostgreSQL互換モード)でテストが通る(record-shop-ec-domainと同じ方針)。全42テスト。
+Dockerが無くてもH2(PostgreSQL互換モード)でテストが通る(record-shop-ec-jpaと同じ方針)。全42テスト。
 
 ## ローカル起動
 
-record-shop-ec-domain(JPA版、app:8080/postgres:5432)と同時起動できるよう、ポート・DB名をずらしている。
+record-shop-ec-jpa(JPA版、app:8080/postgres:5432)と同時起動できるよう、ポート・DB名をずらしている。
 
 ```bash
 # アプリ+実PostgreSQLを一括起動(http://localhost:8081)

@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * record-shop-ec-domain(JPA版)の {@code ListingOptimisticLockingTest} と全く同じシナリオを、
+ * record-shop-ec-jpa(JPA版)の {@code ListingOptimisticLockingTest} と全く同じシナリオを、
  * MyBatis版({@link MyBatisListingRepository})で検証する。
  *
  * <p>JPA版との一番の違いは、versionの管理を{@link MyBatisListingRepository}内の

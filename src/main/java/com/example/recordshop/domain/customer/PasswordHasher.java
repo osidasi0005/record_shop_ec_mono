@@ -8,7 +8,7 @@ package com.example.recordshop.domain.customer;
  *
  * <p>この比較実験プロジェクトでは、永続化技術(JPA/MyBatis)の比較が目的のため、
  * 実際のBCrypt実装(Spring Security依存)は移植していない。テストでは
- * record-shop-ec-domain と同様、フェイク実装で代用する。
+ * record-shop-ec-jpa と同様、フェイク実装で代用する。
  */
 public interface PasswordHasher {
 
