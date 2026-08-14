@@ -10,14 +10,17 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as path from 'path';
 
 /**
- * record-shop-ec-jpa(JPA版)と同じドメインモデル・Web層を持つMyBatis版の
- * AWSインフラ。{@link RecordShopEcCdkStack}をそのまま複製し、参照するDockerfileだけを
- * record-shop-ec-mybatisに差し替えている(VPC/RDS/ECS/ALB/CloudFrontをJPA版とは
- * 別に1セットまるごと持つ ―― AWS上でもJPA版・MyBatis版を同時に動かして比較できるようにするため)。
+ * レコード販売ECサイトのAWSインフラ(MyBatis永続化層版)。
+ * VPC + RDS(PostgreSQL) + ECS Fargate + ALB + CloudFront を1スタックにまとめている。
  *
- * コスト面は{@link RecordShopEcCdkStack}と同一(NATゲートウェイ1個、Fargate 0.25vCPU/0.5GB x1台、
- * RDS db.t4g.micro)。JPA版と2セット同時稼働させると費用も単純に2倍(月$120〜180程度)になるため、
- * 比較検証が終わったら `cdk destroy RecordShopEcMybatisCdkStack` で削除すること。
+ * コスト最小化のため: NATゲートウェイ1個のみ、Fargate 0.25vCPU/0.5GB x1台、RDS db.t4g.micro。
+ * それでも起動しているだけで課金される(NAT + RDS + ALB + CloudFrontで概算 月$60〜90程度、
+ * CloudFrontはデモ規模のアクセス量ならほぼ誤差)ため、デモが終わったら
+ * `cdk destroy RecordShopEcMybatisCdkStack` で削除すること。
+ *
+ * リソースの論理ID(`RecordShopMybatis*`)には、かつて併存していたJPA版スタックとの区別のため
+ * 命名した名残の"Mybatis"が残っているが、CDKの論理IDを変更するとAWS上の実リソース
+ * (RDS等)が再作成されてしまうため、あえてそのまま維持している。
  */
 export class RecordShopEcMybatisCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -62,7 +65,11 @@ export class RecordShopEcMybatisCdkStack extends cdk.Stack {
       memoryLimitMiB: 512,
       desiredCount: 1,
       publicLoadBalancer: true,
-      // JPA版で実際にクラッシュループを起こして確認した値をそのまま踏襲する。
+      // 0.25vCPUのFargateタスクではSpring Boot起動に90秒前後かかることがあり、
+      // デフォルト60秒の猶予期間だと起動完了直前にヘルスチェック失敗でタスクが強制終了→
+      // 再起動…を繰り返すクラッシュループに陥ることを実際に発生させて確認した。
+      // 猶予期間を300秒まで伸ばし、healthyThresholdCountも下のconfigureHealthCheck側で
+      // 2(AWSの最小値)まで下げることで、起動完了後すぐ(60秒)healthy判定されるようにする。
       healthCheckGracePeriod: cdk.Duration.seconds(300),
       taskImageOptions: {
         image: ecs.ContainerImage.fromAsset(path.join(__dirname, '../../record-shop-ec-mybatis')),
