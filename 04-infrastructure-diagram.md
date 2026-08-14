@@ -1,15 +1,21 @@
 # インフラ構成図
 
-`record-shop-ec-cdk`(AWS CDK、TypeScript)で定義されているAWS構成。1スタック
-(`RecordShopEcCdkStack`)にVPC・RDS・ECS Fargate・ALB・CloudFrontをまとめている。
+`record-shop-ec-cdk`(AWS CDK、TypeScript)で定義されているAWS構成。**2つの独立したスタック**
+(`RecordShopEcCdkStack`=JPA版、`RecordShopEcMybatisCdkStack`=MyBatis版)を持ち、それぞれが
+VPC・RDS・ECS Fargate・ALB・CloudFrontをまるごと1セット持つ(リソースの共有は一切無い)。
+参照するDockerイメージのビルド元(`record-shop-ec-domain`か`record-shop-ec-mybatis`か)以外、
+2つのスタックの構成は完全に同一。
 
-## 全体構成
+**現在の稼働状況**: JPA版スタック(`RecordShopEcCdkStack`)はコスト最小化のため`cdk destroy`
+で削除済み。MyBatis版スタック(`RecordShopEcMybatisCdkStack`)のみ稼働中(下記コスト構造を参照)。
+
+## 全体構成(スタック1セットあたり)
 
 ```mermaid
 graph TB
     Browser["ブラウザ"]
 
-    subgraph AWS["AWS(ap-northeast-1)"]
+    subgraph AWS["AWS(ap-northeast-1)― JPA版・MyBatis版それぞれ1セット"]
         CF["CloudFront Distribution<br/>*.cloudfront.net(標準HTTPS対応)<br/>ViewerProtocolPolicy: REDIRECT_TO_HTTPS"]
         CFFunc["CloudFront Function<br/>(viewer-request)<br/>x-forwarded-proto-cfヘッダー付与"]
 
@@ -21,7 +27,7 @@ graph TB
             end
 
             subgraph Private["Private Subnet(egress)"]
-                Fargate["ECS Fargateタスク ×1<br/>0.25vCPU / 0.5GB<br/>Spring Boot(record-shop-ec-domain)"]
+                Fargate["ECS Fargateタスク ×1<br/>0.25vCPU / 0.5GB<br/>Spring Boot(JPA版 or MyBatis版)"]
                 RDS[("RDS PostgreSQL 16<br/>db.t4g.micro<br/>publiclyAccessible: false")]
             end
         end
@@ -51,6 +57,10 @@ graph TB
     class RDS,SecretsAdmin,SecretsRDS data
 ```
 
+この1セットが**JPA版・MyBatis版それぞれ独立に**存在する(VPCもRDSもALBもCloudFrontも
+共有しない)。CDK上は`bin/record-shop-ec-cdk.ts`が両スタックを定義しており、
+`npx cdk deploy <スタック名>` / `npx cdk destroy <スタック名>` で個別にデプロイ・削除できる。
+
 ## リクエストフロー(HTTPS化の仕組み)
 
 CloudFrontはブラウザとの間をHTTPSにする一方、CloudFront〜ALB間は意図的にHTTPのまま
@@ -58,7 +68,8 @@ CloudFrontはブラウザとの間をHTTPSにする一方、CloudFront〜ALB間�
 この構成では **ALBが自分への接続プロトコル(常にHTTP)で`X-Forwarded-Proto`ヘッダーを
 毎回上書きしてしまう** ため、標準的な`X-Forwarded-Proto`の転送だけではアプリ側が
 「ブラウザは実際にはHTTPSでアクセスしている」ことを認識できない(リダイレクトの
-Locationヘッダーが`http://`になってしまう不具合が実際に発生した)。
+Locationヘッダーが`http://`になってしまう不具合が実際に発生した)。この仕組みはJPA版・
+MyBatis版で完全に同一(`CloudFrontProtoFilter`はWeb層の一部としてどちらにも無修正コピーされている)。
 
 ```mermaid
 sequenceDiagram
@@ -80,12 +91,14 @@ sequenceDiagram
     CF-->>B: 302 Location: https://...
 ```
 
-対応コード: [`record-shop-ec-cdk-stack.ts`](../record-shop-ec-cdk/lib/record-shop-ec-cdk-stack.ts)
-(CloudFront Function定義)、
+対応コード:
+[`record-shop-ec-cdk-stack.ts`](../record-shop-ec-cdk/lib/record-shop-ec-cdk-stack.ts)(JPA版)/
+[`record-shop-ec-mybatis-cdk-stack.ts`](../record-shop-ec-cdk/lib/record-shop-ec-mybatis-cdk-stack.ts)(MyBatis版)
+のCloudFront Function定義(内容は同一)、
 [`CloudFrontProtoFilter.java`](../record-shop-ec-domain/src/main/java/com/example/recordshop/infrastructure/web/CloudFrontProtoFilter.java)
-(アプリ側の対応フィルタ)。
+(アプリ側の対応フィルタ、両バージョンに無修正コピー)。
 
-## 主要リソースの設定値
+## 主要リソースの設定値(JPA版・MyBatis版共通)
 
 | リソース | 設定 | 理由・備考 |
 |---|---|---|
@@ -96,8 +109,21 @@ sequenceDiagram
 | CloudFront | `CachePolicy.CACHING_DISABLED`、`OriginRequestPolicy.ALL_VIEWER` | セッションCookie・CSRFトークンを含む動的画面のためキャッシュ不可 |
 | Secrets Manager | RDS認証情報(自動生成)、Adminパスワード(自動生成20文字) | 平文パスワードをコード・環境変数に書かない |
 
+これらの設定値はJPA版で試行錯誤して確定させたもの(クラッシュループ等を実際に起こして
+調整した経緯は[record-shop-ec-domain](../record-shop-ec-domain)のREADME参照)を、MyBatis版
+スタックにもそのまま踏襲している。
+
 ## コスト構造
 
-NAT Gateway + RDS + ALB + CloudFront が常時課金対象で、**合計おおよそ月$60〜90程度**
-(CloudFrontはデモ規模のアクセス量ならほぼ誤差)。デモ確認後は
-`cd record-shop-ec-cdk && npx cdk destroy` で削除する運用を前提としている。
+1スタックあたりNAT Gateway + RDS + ALB + CloudFrontが常時課金対象で、**合計おおよそ月$60〜90程度**
+(CloudFrontはデモ規模のアクセス量ならほぼ誤差)。2スタック同時稼働させると単純に倍(月$120〜180程度)
+になるため、比較検証が終わったスタックから順に
+
+```bash
+cd record-shop-ec-cdk
+npx cdk destroy RecordShopEcCdkStack        # JPA版
+npx cdk destroy RecordShopEcMybatisCdkStack # MyBatis版
+```
+
+で削除する運用としている。現状はJPA版を削除済み・MyBatis版のみ稼働中のため、課金は
+月$60〜90程度に縮小している。

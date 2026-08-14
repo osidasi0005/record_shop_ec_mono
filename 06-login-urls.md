@@ -34,19 +34,33 @@
 
 ## デモ環境の例(AWS)
 
-現在デプロイされているデモ環境のCloudFront URL:
+`record-shop-ec-cdk`はJPA版・MyBatis版それぞれ独立したスタック
+(`RecordShopEcCdkStack`/`RecordShopEcMybatisCdkStack`)を持ち、ログイン方法・画面はどちらも
+共通(この後の表はそのまま両方に当てはまる)。コスト最小化のため**常時両方が稼働している
+わけではなく**、比較検証の状況に応じてどちらか一方だけ、あるいはどちらも稼働していないことがある。
+
+**現在稼働中(2026-08-14時点)**: MyBatis版のみ
 
 ```
-https://d2byt2kf4uiilz.cloudfront.net
+https://d10qc58jhjv0fq.cloudfront.net
 ```
 
-- トップ/商品一覧: `https://d2byt2kf4uiilz.cloudfront.net/catalog`
-- ログイン: `https://d2byt2kf4uiilz.cloudfront.net/login`
-- 会員登録: `https://d2byt2kf4uiilz.cloudfront.net/register`
-- 管理画面: `https://d2byt2kf4uiilz.cloudfront.net/admin/releases`(要ADMINログイン)
+- トップ/商品一覧: `https://d10qc58jhjv0fq.cloudfront.net/catalog`
+- ログイン: `https://d10qc58jhjv0fq.cloudfront.net/login`
+- 会員登録: `https://d10qc58jhjv0fq.cloudfront.net/register`
+- 管理画面: `https://d10qc58jhjv0fq.cloudfront.net/admin/releases`(要ADMINログイン)
 
-**注意**: これは学習・デモ用途の一時的な環境であり、コスト最小化のため
-`cd record-shop-ec-cdk && npx cdk destroy` で随時削除する運用としている。
-削除後はこのURLが無効になるため、再デプロイ後は`cdk deploy`の出力
-(`RecordShopEcCdkStack.ServiceUrl`)から都度最新のURLを確認すること
-(CloudFrontのドメイン名はデプロイのたびに変わりうる)。
+JPA版スタック(`RecordShopEcCdkStack`)は比較検証後、コスト最小化のため`cdk destroy`で
+削除済み。再デプロイすれば同じ手順で復元できる(下記コマンド参照)。
+
+**注意**: これは学習・デモ用途の一時的な環境であり、コスト最小化のため使わない方は
+随時削除する運用としている。削除後はそのURLが無効になるため、再デプロイ後は`cdk deploy`
+の出力(`ServiceUrl`)から都度最新のURLを確認すること(CloudFrontのドメイン名はデプロイの
+たびに変わりうる)。
+
+```bash
+cd record-shop-ec-cdk
+npx cdk deploy RecordShopEcCdkStack         # JPA版を(再)デプロイ
+npx cdk deploy RecordShopEcMybatisCdkStack  # MyBatis版を(再)デプロイ
+npx cdk destroy <スタック名>                 # 比較検証が終わったスタックを削除
+```

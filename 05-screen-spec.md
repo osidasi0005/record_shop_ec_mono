@@ -6,6 +6,11 @@
 の設定に基づく。スクリーンショットは実際にデプロイ済みのCloudFront URLから撮影した
 (データはテスト用: `Kind of Blue` / Miles Davis を購入した状態)。
 
+> Web層(`web/**`・`config/**`・テンプレート一式)は`record-shop-ec-mybatis`にも無修正で
+> コピーされており、URL・入力項目・権限・見た目は**MyBatis版でも完全に同一**(永続化層
+> だけがJPA/MyBatisで異なる)。スクリーンショットはJPA版で撮影したものだが、MyBatis版でも
+> 同じ画面が表示される。
+
 ## URL一覧(早見表)
 
 | # | URL | メソッド | 画面 | 認証要否 |

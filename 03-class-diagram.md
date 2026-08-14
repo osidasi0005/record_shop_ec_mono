@@ -1,7 +1,10 @@
 # クラス図
 
-ドメイン層(`domain/**`)の主要クラスを、コンテキストごとに示す。Web層・JPA層は含めない
-(対応関係は [02-er-diagram.md](02-er-diagram.md) を参照)。
+ドメイン層(`domain/**`)の主要クラスを、コンテキストごとに示す。Web層・永続化層(JPA/MyBatis)は
+含めない(対応関係は [02-er-diagram.md](02-er-diagram.md) を参照)。
+
+`record-shop-ec-domain`(JPA版)・`record-shop-ec-mybatis`(MyBatis版)ともにドメイン層は
+無修正コピーで完全に同一のため、以下のクラス図はどちらのバージョンにもそのまま当てはまる。
 
 ## Catalog コンテキスト
 
