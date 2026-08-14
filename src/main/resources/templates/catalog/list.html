@@ -15,6 +15,7 @@
     <div class="release-list">
         <a class="release-card" th:each="release : ${releases}"
            th:href="@{'/catalog/' + ${release.releaseId}}">
+            <img class="artwork-thumb" th:if="${release.artworkUrl}" th:src="${release.artworkUrl}" alt=""/>
             <div class="title" th:text="${release.title}">タイトル</div>
             <div class="artist" th:text="${release.artistName}">アーティスト</div>
             <div class="muted" th:text="${release.originalReleaseYear}">1970</div>

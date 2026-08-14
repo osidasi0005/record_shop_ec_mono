@@ -28,9 +28,9 @@ class MyBatisReleaseRepositoryTest {
 
     private Release kindOfBlue() {
         Release release = Release.register(ReleaseId.generate(), "Kind of Blue", "Miles Davis",
-                Set.of("Jazz", "Modal Jazz"), 1959);
+                Set.of("Jazz", "Modal Jazz"), 1959, "https://example.com/kob.jpg");
         release.addPressing("Columbia", "CL 1355", "US", 1959, "XSM", false,
-                Format.vinyl(MediaType.LP, Speed.RPM_33, 1));
+                Format.vinyl(MediaType.LP, Speed.RPM_33, 1), "https://example.com/kob-pressing.jpg");
         return release;
     }
 
@@ -43,10 +43,25 @@ class MyBatisReleaseRepositoryTest {
 
         assertThat(found.title()).isEqualTo("Kind of Blue");
         assertThat(found.genres()).containsExactlyInAnyOrder("Jazz", "Modal Jazz");
+        assertThat(found.artworkUrl()).isEqualTo("https://example.com/kob.jpg");
         assertThat(found.pressings()).hasSize(1);
         Pressing pressing = found.pressings().get(0);
         assertThat(pressing.catalogNumber()).isEqualTo("CL 1355");
         assertThat(pressing.format().mediaType()).isEqualTo(MediaType.LP);
+        assertThat(pressing.artworkUrl()).isEqualTo("https://example.com/kob-pressing.jpg");
+    }
+
+    @Test
+    void save_changeArtworkUrl後に保存すると変更内容が永続化される() {
+        Release release = kindOfBlue();
+        repository.save(release);
+
+        release = repository.findById(release.releaseId()).orElseThrow();
+        release.changeArtworkUrl("https://example.com/kob-v2.jpg");
+        repository.save(release);
+
+        Release found = repository.findById(release.releaseId()).orElseThrow();
+        assertThat(found.artworkUrl()).isEqualTo("https://example.com/kob-v2.jpg");
     }
 
     @Test
@@ -64,9 +79,9 @@ class MyBatisReleaseRepositoryTest {
     void findAll_で複数Releaseのgenres_pressingsが取り違えなく組み立てられる() {
         Release release1 = kindOfBlue();
         Release release2 = Release.register(ReleaseId.generate(), "A Love Supreme", "John Coltrane",
-                Set.of("Jazz", "Spiritual Jazz"), 1965);
+                Set.of("Jazz", "Spiritual Jazz"), 1965, null);
         release2.addPressing("Impulse!", "A-77", "US", 1965, null, false,
-                Format.vinyl(MediaType.LP, Speed.RPM_33, 1));
+                Format.vinyl(MediaType.LP, Speed.RPM_33, 1), null);
         repository.save(release1);
         repository.save(release2);
 

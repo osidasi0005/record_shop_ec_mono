@@ -14,6 +14,21 @@
     <p class="muted" th:text="${release.artistName} + ' / ' + ${release.originalReleaseYear}">アーティスト</p>
 
     <p class="error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+    <p class="notice" th:if="${notice}" th:text="${notice}"></p>
+
+    <div class="card">
+        <h3>作品全体のジャケット画像</h3>
+        <img class="artwork-preview" th:if="${release.artworkUrl}" th:src="${release.artworkUrl}" alt="ジャケット画像"/>
+        <p class="muted" th:unless="${release.artworkUrl}">まだ設定されていません。</p>
+        <form th:action="@{'/admin/releases/' + ${release.releaseId} + '/artwork'}" th:object="${artworkForm}"
+              method="post" style="margin-top:0.8rem;">
+            <div class="field">
+                <label for="artworkUrl">ジャケット画像URL</label>
+                <input type="url" id="artworkUrl" th:field="*{artworkUrl}" placeholder="https://..."/>
+            </div>
+            <button type="submit" class="btn-secondary">アートワークを更新</button>
+        </form>
+    </div>
 
     <div class="card" th:each="entry : ${pressingListings}">
         <h3 th:text="${entry.key.labelName} + ' / ' + ${entry.key.catalogNumber}">レーベル / 品番</h3>
@@ -22,6 +37,20 @@
             <span th:text="${entry.key.pressYear}">1959</span>年プレス
             <span th:if="${entry.key.reissue}">(reissue)</span>
         </p>
+
+        <img class="artwork-preview" th:if="${entry.key.artworkUrl}" th:src="${entry.key.artworkUrl}" alt="この版のジャケット画像"/>
+
+        <details style="margin-top:0.8rem;">
+            <summary class="muted">この版のジャケット画像を設定・変更する</summary>
+            <form th:action="@{'/admin/releases/' + ${release.releaseId} + '/pressings/' + ${entry.key.pressingId} + '/artwork'}"
+                  method="post" style="margin-top:0.8rem;">
+                <div class="field">
+                    <label>ジャケット画像URL</label>
+                    <input type="url" name="artworkUrl" th:value="${entry.key.artworkUrl}" placeholder="https://..."/>
+                </div>
+                <button type="submit" class="btn-secondary">この版のアートワークを更新</button>
+            </form>
+        </details>
 
         <table class="simple" th:if="${!#lists.isEmpty(entry.value)}">
             <thead>
@@ -135,6 +164,10 @@
             <div class="field">
                 <label for="discCount">枚数</label>
                 <input type="number" id="discCount" th:field="*{discCount}" min="1" required/>
+            </div>
+            <div class="field">
+                <label for="pressingArtworkUrl">ジャケット画像URL(任意)</label>
+                <input type="url" id="pressingArtworkUrl" th:field="*{artworkUrl}" placeholder="https://..."/>
             </div>
             <button type="submit">プレス版を追加</button>
         </form>

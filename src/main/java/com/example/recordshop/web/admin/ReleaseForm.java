@@ -8,6 +8,7 @@ public class ReleaseForm {
     /** カンマ区切りで入力してもらい、コントローラー側でSetに変換する。 */
     private String genres = "";
     private int originalReleaseYear;
+    private String artworkUrl = "";
 
     public String getTitle() {
         return title;
@@ -39,5 +40,13 @@ public class ReleaseForm {
 
     public void setOriginalReleaseYear(int originalReleaseYear) {
         this.originalReleaseYear = originalReleaseYear;
+    }
+
+    public String getArtworkUrl() {
+        return artworkUrl;
+    }
+
+    public void setArtworkUrl(String artworkUrl) {
+        this.artworkUrl = artworkUrl;
     }
 }

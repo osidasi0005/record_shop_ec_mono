@@ -17,6 +17,7 @@
         <table class="simple">
             <thead>
             <tr>
+                <th></th>
                 <th>タイトル</th>
                 <th>アーティスト</th>
                 <th>発売年</th>
@@ -26,6 +27,10 @@
             </thead>
             <tbody>
             <tr th:each="release : ${releases}">
+                <td>
+                    <img th:if="${release.artworkUrl}" th:src="${release.artworkUrl}" alt=""
+                         style="width:2.4rem; height:2.4rem; object-fit:cover; border-radius:4px;"/>
+                </td>
                 <td th:text="${release.title}">タイトル</td>
                 <td th:text="${release.artistName}">アーティスト</td>
                 <td th:text="${release.originalReleaseYear}">1970</td>

@@ -13,6 +13,7 @@ public record AddPressingRequest(
         boolean reissue,
         MediaType mediaType,
         Speed speed,
-        int discCount
+        int discCount,
+        String artworkUrl
 ) {
 }

@@ -157,6 +157,31 @@ button:hover, .btn:hover {
     font-size: 0.9rem;
 }
 
+.release-card .artwork-thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 0.6rem;
+    background: #eae5da;
+}
+
+.artwork-preview {
+    display: block;
+    max-width: 240px;
+    width: 100%;
+    border-radius: 8px;
+    margin-bottom: 0.6rem;
+}
+
+.artwork-hero {
+    display: block;
+    max-width: 320px;
+    width: 100%;
+    border-radius: 10px;
+    margin: 1rem 0;
+}
+
 .muted {
     color: #6b6153;
     font-size: 0.88rem;

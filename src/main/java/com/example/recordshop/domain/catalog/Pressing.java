@@ -18,6 +18,9 @@ public final class Pressing {
     private final String matrixRunout;
     private final boolean reissue;
     private final Format format;
+    /** ジャケット画像のURL。再発盤ごとに異なる場合があるため任意項目として持つ。未設定は{@code null}。
+     *  登録後の変更は{@link Release#changePressingArtworkUrl}経由でのみ行う。 */
+    private String artworkUrl;
 
     /**
      * 永続化層からの再構築用ファクトリ。既存の {@link PressingId} をそのまま使う(新規発行しない)点が
@@ -25,12 +28,13 @@ public final class Pressing {
      */
     public static Pressing reconstitute(PressingId pressingId, String labelName, String catalogNumber,
                                          String country, int pressYear, String matrixRunout,
-                                         boolean reissue, Format format) {
-        return new Pressing(pressingId, labelName, catalogNumber, country, pressYear, matrixRunout, reissue, format);
+                                         boolean reissue, Format format, String artworkUrl) {
+        return new Pressing(pressingId, labelName, catalogNumber, country, pressYear, matrixRunout, reissue,
+                format, artworkUrl);
     }
 
     Pressing(PressingId pressingId, String labelName, String catalogNumber, String country,
-             int pressYear, String matrixRunout, boolean reissue, Format format) {
+             int pressYear, String matrixRunout, boolean reissue, Format format, String artworkUrl) {
         this.pressingId = Objects.requireNonNull(pressingId, "pressingId must not be null");
         this.labelName = requireNonBlank(labelName, "labelName");
         this.catalogNumber = requireNonBlank(catalogNumber, "catalogNumber");
@@ -39,6 +43,7 @@ public final class Pressing {
         this.matrixRunout = matrixRunout;
         this.reissue = reissue;
         this.format = Objects.requireNonNull(format, "format must not be null");
+        this.artworkUrl = (artworkUrl == null || artworkUrl.isBlank()) ? null : artworkUrl;
     }
 
     private static String requireNonBlank(String value, String field) {
@@ -92,6 +97,16 @@ public final class Pressing {
 
     public Format format() {
         return format;
+    }
+
+    /** ジャケット画像のURL。未設定の場合は{@code null}。 */
+    public String artworkUrl() {
+        return artworkUrl;
+    }
+
+    /** {@link Release#changePressingArtworkUrl}からのみ呼ばれるパッケージ内限定の変更用メソッド。 */
+    void changeArtworkUrl(String artworkUrl) {
+        this.artworkUrl = (artworkUrl == null || artworkUrl.isBlank()) ? null : artworkUrl;
     }
 
     @Override

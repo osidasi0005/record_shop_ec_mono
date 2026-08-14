@@ -11,6 +11,7 @@ public record ReleaseResponse(
         String artistName,
         Set<String> genres,
         int originalReleaseYear,
+        String artworkUrl,
         List<PressingResponse> pressings
 ) {
     public static ReleaseResponse from(Release release) {
@@ -20,6 +21,7 @@ public record ReleaseResponse(
                 release.artistName(),
                 release.genres(),
                 release.originalReleaseYear(),
+                release.artworkUrl(),
                 release.pressings().stream().map(PressingResponse::from).toList()
         );
     }

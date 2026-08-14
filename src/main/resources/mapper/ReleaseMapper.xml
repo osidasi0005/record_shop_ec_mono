@@ -10,6 +10,7 @@
             <!-- "int"はMyBatisのエイリアスではInteger(ラッパー)を指す。recordのprimitive intと
                  一致させるため、プリミティブ用エイリアス"_int"を使う(下のPressing側も同様)。 -->
             <arg column="original_release_year" javaType="_int"/>
+            <arg column="artwork_url" javaType="string"/>
         </constructor>
     </resultMap>
 
@@ -33,12 +34,13 @@
             <arg column="media_type" javaType="string"/>
             <arg column="speed" javaType="string"/>
             <arg column="disc_count" javaType="_int"/>
+            <arg column="artwork_url" javaType="string"/>
         </constructor>
     </resultMap>
 
     <insert id="insertRelease" parameterType="com.example.recordshop.infrastructure.mybatis.ReleaseRow">
-        INSERT INTO releases (id, title, artist_name, original_release_year)
-        VALUES (#{id}, #{title}, #{artistName}, #{originalReleaseYear})
+        INSERT INTO releases (id, title, artist_name, original_release_year, artwork_url)
+        VALUES (#{id}, #{title}, #{artistName}, #{originalReleaseYear}, #{artworkUrl})
     </insert>
 
     <insert id="insertGenre">
@@ -47,9 +49,9 @@
 
     <insert id="insertPressing" parameterType="com.example.recordshop.infrastructure.mybatis.PressingRow">
         INSERT INTO pressings (id, release_id, label_name, catalog_number, country, press_year,
-                                matrix_runout, reissue, media_type, speed, disc_count)
+                                matrix_runout, reissue, media_type, speed, disc_count, artwork_url)
         VALUES (#{id}, #{releaseId}, #{labelName}, #{catalogNumber}, #{country}, #{pressYear},
-                #{matrixRunout}, #{reissue}, #{mediaType}, #{speed}, #{discCount})
+                #{matrixRunout}, #{reissue}, #{mediaType}, #{speed}, #{discCount}, #{artworkUrl})
     </insert>
 
     <!-- MyBatisにはJPAのようなdirty checking(変更検知)が無いため、addPressing()等で
@@ -57,7 +59,7 @@
          (JPAの@OneToMany(cascade=ALL,orphanRemoval=true)の実質的な代替)。 -->
     <update id="updateRelease" parameterType="com.example.recordshop.infrastructure.mybatis.ReleaseRow">
         UPDATE releases SET title = #{title}, artist_name = #{artistName},
-                             original_release_year = #{originalReleaseYear}
+                             original_release_year = #{originalReleaseYear}, artwork_url = #{artworkUrl}
         WHERE id = #{id}
     </update>
 
@@ -70,7 +72,7 @@
     </delete>
 
     <select id="selectReleaseById" resultMap="releaseRowMap">
-        SELECT id, title, artist_name, original_release_year FROM releases WHERE id = #{id}
+        SELECT id, title, artist_name, original_release_year, artwork_url FROM releases WHERE id = #{id}
     </select>
 
     <select id="selectGenresByReleaseId" resultMap="genreRowMap">
@@ -79,12 +81,12 @@
 
     <select id="selectPressingsByReleaseId" resultMap="pressingRowMap">
         SELECT id, release_id, label_name, catalog_number, country, press_year, matrix_runout,
-               reissue, media_type, speed, disc_count
+               reissue, media_type, speed, disc_count, artwork_url
         FROM pressings WHERE release_id = #{releaseId}
     </select>
 
     <select id="selectAllReleases" resultMap="releaseRowMap">
-        SELECT id, title, artist_name, original_release_year FROM releases
+        SELECT id, title, artist_name, original_release_year, artwork_url FROM releases
     </select>
 
     <select id="selectAllGenres" resultMap="genreRowMap">
@@ -93,7 +95,7 @@
 
     <select id="selectAllPressings" resultMap="pressingRowMap">
         SELECT id, release_id, label_name, catalog_number, country, press_year, matrix_runout,
-               reissue, media_type, speed, disc_count
+               reissue, media_type, speed, disc_count, artwork_url
         FROM pressings
     </select>
 

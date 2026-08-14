@@ -15,6 +15,7 @@ public class PressingForm {
     private MediaType mediaType = MediaType.LP;
     private Speed speed = Speed.RPM_33;
     private int discCount = 1;
+    private String artworkUrl = "";
 
     public String getLabelName() {
         return labelName;
@@ -86,5 +87,13 @@ public class PressingForm {
 
     public void setDiscCount(int discCount) {
         this.discCount = discCount;
+    }
+
+    public String getArtworkUrl() {
+        return artworkUrl;
+    }
+
+    public void setArtworkUrl(String artworkUrl) {
+        this.artworkUrl = artworkUrl;
     }
 }

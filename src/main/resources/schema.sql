@@ -15,7 +15,8 @@ CREATE TABLE releases (
     id                    UUID PRIMARY KEY,
     title                 VARCHAR(255) NOT NULL,
     artist_name           VARCHAR(255) NOT NULL,
-    original_release_year INTEGER      NOT NULL
+    original_release_year INTEGER      NOT NULL,
+    artwork_url           VARCHAR(1000)
 );
 
 -- JPA版の@ElementCollectionに相当。ジャンルはReleaseの値の集合であり独立エンティティではない。
@@ -38,6 +39,7 @@ CREATE TABLE pressings (
     media_type     VARCHAR(20)  NOT NULL,
     speed          VARCHAR(20)  NOT NULL,
     disc_count     INTEGER      NOT NULL,
+    artwork_url    VARCHAR(1000),
     CONSTRAINT uk_pressing_identity UNIQUE (release_id, catalog_number, country, press_year)
 );
 

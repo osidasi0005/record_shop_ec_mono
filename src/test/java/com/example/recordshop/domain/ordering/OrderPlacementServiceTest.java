@@ -41,9 +41,9 @@ class OrderPlacementServiceTest {
     @Test
     void placeOrder_PressingSnapshotが確定時点の内容で複製される() {
         Release release = Release.register(ReleaseId.generate(), "Kind of Blue", "Miles Davis",
-                Set.of("Jazz"), 1959);
+                Set.of("Jazz"), 1959, null);
         Pressing pressing = release.addPressing("Columbia", "CL 1355", "US", 1959, "XSM", false,
-                Format.vinyl(MediaType.LP, Speed.RPM_33, 1));
+                Format.vinyl(MediaType.LP, Speed.RPM_33, 1), null);
         releaseRepository.save(release);
 
         Listing listing = Listing.usedCopy(ListingId.generate(), pressing.pressingId(), Money.jpy(28000),
@@ -67,9 +67,9 @@ class OrderPlacementServiceTest {
     @Test
     void placeOrder_一部のListingが公開されていない場合は全体をロールバックする() {
         Release release = Release.register(ReleaseId.generate(), "Kind of Blue", "Miles Davis",
-                Set.of("Jazz"), 1959);
+                Set.of("Jazz"), 1959, null);
         Pressing pressing = release.addPressing("Columbia", "CL 1355", "US", 1959, "XSM", false,
-                Format.vinyl(MediaType.LP, Speed.RPM_33, 1));
+                Format.vinyl(MediaType.LP, Speed.RPM_33, 1), null);
         releaseRepository.save(release);
 
         Listing publishedListing = Listing.newCopy(ListingId.generate(), pressing.pressingId(),

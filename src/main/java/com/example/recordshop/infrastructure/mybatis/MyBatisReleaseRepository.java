@@ -49,7 +49,7 @@ public class MyBatisReleaseRepository implements ReleaseRepository {
     public void save(Release release) {
         UUID releaseId = release.releaseId().value();
         ReleaseRow row = new ReleaseRow(releaseId, release.title(), release.artistName(),
-                release.originalReleaseYear());
+                release.originalReleaseYear(), release.artworkUrl());
 
         // JPAならdirty checkingが自動でやってくれる「新規か更新か」の判定を、ここでは
         // 明示的なSELECTで自分の手で行う必要がある。addPressing()等で集約が変化した後の
@@ -123,19 +123,20 @@ public class MyBatisReleaseRepository implements ReleaseRepository {
 
     private Release toDomain(ReleaseRow row, Set<String> genres, List<Pressing> pressings) {
         return Release.reconstitute(new ReleaseId(row.id()), row.title(), row.artistName(),
-                genres, row.originalReleaseYear(), pressings);
+                genres, row.originalReleaseYear(), row.artworkUrl(), pressings);
     }
 
     private Pressing toDomainPressing(PressingRow row) {
         return Pressing.reconstitute(new PressingId(row.id()), row.labelName(), row.catalogNumber(),
                 row.country(), row.pressYear(), row.matrixRunout(), row.reissue(),
-                new Format(MediaType.valueOf(row.mediaType()), Speed.valueOf(row.speed()), row.discCount()));
+                new Format(MediaType.valueOf(row.mediaType()), Speed.valueOf(row.speed()), row.discCount()),
+                row.artworkUrl());
     }
 
     private PressingRow toPressingRow(Pressing pressing, UUID releaseId) {
         return new PressingRow(pressing.pressingId().value(), releaseId, pressing.labelName(),
                 pressing.catalogNumber(), pressing.country(), pressing.pressYear(), pressing.matrixRunout(),
                 pressing.isReissue(), pressing.format().mediaType().name(), pressing.format().speed().name(),
-                pressing.format().discCount());
+                pressing.format().discCount(), pressing.artworkUrl());
     }
 }

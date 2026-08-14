@@ -18,6 +18,7 @@
             <span th:text="${genre}">Jazz</span><span th:if="${!iter.last}">, </span>
         </span>
     </p>
+    <img class="artwork-hero" th:if="${release.artworkUrl}" th:src="${release.artworkUrl}" alt="ジャケット画像"/>
 
     <div class="card" th:each="entry : ${pressingListings}">
         <h3 th:text="${entry.key.labelName} + ' / ' + ${entry.key.catalogNumber}">レーベル / 品番</h3>
@@ -26,6 +27,7 @@
             <span th:text="${entry.key.pressYear}">1959</span>年プレス
             <span th:if="${entry.key.reissue}">(reissue)</span>
         </p>
+        <img class="artwork-preview" th:if="${entry.key.artworkUrl}" th:src="${entry.key.artworkUrl}" alt="この版のジャケット画像"/>
 
         <p class="muted" th:if="${#lists.isEmpty(entry.value)}">現在購入可能な出品はありません。</p>
 

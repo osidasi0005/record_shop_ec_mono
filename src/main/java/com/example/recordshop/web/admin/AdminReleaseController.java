@@ -2,6 +2,7 @@ package com.example.recordshop.web.admin;
 
 import com.example.recordshop.domain.catalog.Format;
 import com.example.recordshop.domain.catalog.Pressing;
+import com.example.recordshop.domain.catalog.PressingId;
 import com.example.recordshop.domain.catalog.Release;
 import com.example.recordshop.domain.catalog.ReleaseId;
 import com.example.recordshop.domain.catalog.ReleaseRepository;
@@ -68,7 +69,7 @@ public class AdminReleaseController {
 
         try {
             Release release = Release.register(ReleaseId.generate(), form.getTitle(), form.getArtistName(),
-                    genres, form.getOriginalReleaseYear());
+                    genres, form.getOriginalReleaseYear(), form.getArtworkUrl());
             releaseRepository.save(release);
             return "redirect:/admin/releases/" + release.releaseId();
         } catch (IllegalArgumentException e) {
@@ -97,7 +98,44 @@ public class AdminReleaseController {
         if (!model.containsAttribute("listingForm")) {
             model.addAttribute("listingForm", new ListingForm());
         }
+        if (!model.containsAttribute("artworkForm")) {
+            ArtworkForm artworkForm = new ArtworkForm();
+            artworkForm.setArtworkUrl(release.artworkUrl());
+            model.addAttribute("artworkForm", artworkForm);
+        }
         return "admin/releases/detail";
+    }
+
+    /** 作品(Release)全体のジャケット画像URLを設定・変更する。 */
+    @PostMapping("/{releaseId}/artwork")
+    public String changeArtwork(@PathVariable String releaseId, @ModelAttribute ArtworkForm form,
+                                 RedirectAttributes redirectAttributes) {
+        Release release = releaseRepository.findById(ReleaseId.of(releaseId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Release not found: " + releaseId));
+
+        release.changeArtworkUrl(form.getArtworkUrl());
+        releaseRepository.save(release);
+        redirectAttributes.addFlashAttribute("notice", "アートワークを更新しました");
+
+        return "redirect:/admin/releases/" + releaseId;
+    }
+
+    /** プレス版(Pressing)ごとのジャケット画像URLを設定・変更する。 */
+    @PostMapping("/{releaseId}/pressings/{pressingId}/artwork")
+    public String changePressingArtwork(@PathVariable String releaseId, @PathVariable String pressingId,
+                                         @ModelAttribute ArtworkForm form, RedirectAttributes redirectAttributes) {
+        Release release = releaseRepository.findById(ReleaseId.of(releaseId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Release not found: " + releaseId));
+
+        try {
+            release.changePressingArtworkUrl(PressingId.of(pressingId), form.getArtworkUrl());
+            releaseRepository.save(release);
+            redirectAttributes.addFlashAttribute("notice", "アートワークを更新しました");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
+        return "redirect:/admin/releases/" + releaseId;
     }
 
     @PostMapping("/{releaseId}/pressings")
@@ -109,7 +147,7 @@ public class AdminReleaseController {
         try {
             release.addPressing(form.getLabelName(), form.getCatalogNumber(), form.getCountry(), form.getPressYear(),
                     form.getMatrixRunout(), form.isReissue(),
-                    Format.vinyl(form.getMediaType(), form.getSpeed(), form.getDiscCount()));
+                    Format.vinyl(form.getMediaType(), form.getSpeed(), form.getDiscCount()), form.getArtworkUrl());
             releaseRepository.save(release);
         } catch (InvariantViolationException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());

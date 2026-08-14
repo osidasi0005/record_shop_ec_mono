@@ -33,7 +33,8 @@ public class ReleaseController {
                 request.title(),
                 request.artistName(),
                 request.genres(),
-                request.originalReleaseYear()
+                request.originalReleaseYear(),
+                request.artworkUrl()
         );
         releaseRepository.save(release);
         return ResponseEntity.status(HttpStatus.CREATED).body(ReleaseResponse.from(release));
@@ -58,7 +59,8 @@ public class ReleaseController {
                 request.pressYear(),
                 request.matrixRunout(),
                 request.reissue(),
-                Format.vinyl(request.mediaType(), request.speed(), request.discCount())
+                Format.vinyl(request.mediaType(), request.speed(), request.discCount()),
+                request.artworkUrl()
         );
         releaseRepository.save(release);
         return ResponseEntity.status(HttpStatus.CREATED).body(PressingResponse.from(pressing));

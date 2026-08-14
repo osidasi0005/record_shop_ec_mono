@@ -7,6 +7,7 @@ public record RegisterReleaseRequest(
         String title,
         String artistName,
         Set<String> genres,
-        int originalReleaseYear
+        int originalReleaseYear,
+        String artworkUrl
 ) {
 }

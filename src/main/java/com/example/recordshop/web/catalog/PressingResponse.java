@@ -8,7 +8,8 @@ public record PressingResponse(
         String catalogNumber,
         String country,
         int pressYear,
-        boolean reissue
+        boolean reissue,
+        String artworkUrl
 ) {
     public static PressingResponse from(Pressing pressing) {
         return new PressingResponse(
@@ -17,7 +18,8 @@ public record PressingResponse(
                 pressing.catalogNumber(),
                 pressing.country(),
                 pressing.pressYear(),
-                pressing.isReissue()
+                pressing.isReissue(),
+                pressing.artworkUrl()
         );
     }
 }
