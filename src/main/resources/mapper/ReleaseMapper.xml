@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.recordshop.infrastructure.mybatis.ReleaseMapper">
+
+    <resultMap id="releaseRowMap" type="com.example.recordshop.infrastructure.mybatis.ReleaseRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"/>
+            <arg column="title" javaType="string"/>
+            <arg column="artist_name" javaType="string"/>
+            <!-- "int"はMyBatisのエイリアスではInteger(ラッパー)を指す。recordのprimitive intと
+                 一致させるため、プリミティブ用エイリアス"_int"を使う(下のPressing側も同様)。 -->
+            <arg column="original_release_year" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="genreRowMap" type="com.example.recordshop.infrastructure.mybatis.GenreRow">
+        <constructor>
+            <idArg column="release_id" javaType="java.util.UUID"/>
+            <idArg column="genre" javaType="string"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="pressingRowMap" type="com.example.recordshop.infrastructure.mybatis.PressingRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"/>
+            <arg column="release_id" javaType="java.util.UUID"/>
+            <arg column="label_name" javaType="string"/>
+            <arg column="catalog_number" javaType="string"/>
+            <arg column="country" javaType="string"/>
+            <arg column="press_year" javaType="_int"/>
+            <arg column="matrix_runout" javaType="string"/>
+            <arg column="reissue" javaType="_boolean"/>
+            <arg column="media_type" javaType="string"/>
+            <arg column="speed" javaType="string"/>
+            <arg column="disc_count" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insertRelease" parameterType="com.example.recordshop.infrastructure.mybatis.ReleaseRow">
+        INSERT INTO releases (id, title, artist_name, original_release_year)
+        VALUES (#{id}, #{title}, #{artistName}, #{originalReleaseYear})
+    </insert>
+
+    <insert id="insertGenre">
+        INSERT INTO release_genres (release_id, genre) VALUES (#{releaseId}, #{genre})
+    </insert>
+
+    <insert id="insertPressing" parameterType="com.example.recordshop.infrastructure.mybatis.PressingRow">
+        INSERT INTO pressings (id, release_id, label_name, catalog_number, country, press_year,
+                                matrix_runout, reissue, media_type, speed, disc_count)
+        VALUES (#{id}, #{releaseId}, #{labelName}, #{catalogNumber}, #{country}, #{pressYear},
+                #{matrixRunout}, #{reissue}, #{mediaType}, #{speed}, #{discCount})
+    </insert>
+
+    <select id="selectReleaseById" resultMap="releaseRowMap">
+        SELECT id, title, artist_name, original_release_year FROM releases WHERE id = #{id}
+    </select>
+
+    <select id="selectGenresByReleaseId" resultMap="genreRowMap">
+        SELECT release_id, genre FROM release_genres WHERE release_id = #{releaseId}
+    </select>
+
+    <select id="selectPressingsByReleaseId" resultMap="pressingRowMap">
+        SELECT id, release_id, label_name, catalog_number, country, press_year, matrix_runout,
+               reissue, media_type, speed, disc_count
+        FROM pressings WHERE release_id = #{releaseId}
+    </select>
+
+    <select id="selectAllReleases" resultMap="releaseRowMap">
+        SELECT id, title, artist_name, original_release_year FROM releases
+    </select>
+
+    <select id="selectAllGenres" resultMap="genreRowMap">
+        SELECT release_id, genre FROM release_genres
+    </select>
+
+    <select id="selectAllPressings" resultMap="pressingRowMap">
+        SELECT id, release_id, label_name, catalog_number, country, press_year, matrix_runout,
+               reissue, media_type, speed, disc_count
+        FROM pressings
+    </select>
+
+    <select id="selectReleaseIdByPressingId" resultType="java.util.UUID">
+        SELECT release_id FROM pressings WHERE id = #{pressingId}
+    </select>
+
+</mapper>

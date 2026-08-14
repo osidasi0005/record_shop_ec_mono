@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: recordshop_mybatis
+      POSTGRES_USER: recordshop
+      POSTGRES_PASSWORD: recordshop
+    ports:
+      # record-shop-ec-domain(JPA版, 5432番)と同時に起動できるようポートをずらす
+      - "5433:5432"
+    volumes:
+      - postgres-mybatis-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recordshop -d recordshop_mybatis"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-mybatis-data:

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <!-- record-shop-ec-domain(JPA版)とバージョンを揃え、永続化技術以外の条件を同じにする -->
+        <version>3.5.16</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.example.recordshop</groupId>
+    <artifactId>record-shop-ec-mybatis</artifactId>
+    <version>0.1.0</version>
+    <packaging>jar</packaging>
+
+    <name>Record Shop EC MyBatis Comparison</name>
+    <description>
+        record-shop-ec-domain(JPA版)からドメイン層をそのままコピーし、永続化層だけをMyBatisで実装した比較実験用プロジェクト。
+        Catalog(Release/Pressing/genres)とInventory(Listing)の2コンテキストのみを対象とする。
+    </description>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mybatis-spring-boot.version>3.0.4</mybatis-spring-boot.version>
+    </properties>
+
+    <dependencies>
+        <!-- JPA版のspring-boot-starter-data-jpaに相当する、MyBatis版の永続化スターター -->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>${mybatis-spring-boot.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
+        <!-- 本番/ローカルDocker ComposeのPostgreSQLに接続する -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Dockerが無くても自動テストを回せるように、テストのみH2(PostgreSQL互換モード)を使う -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
