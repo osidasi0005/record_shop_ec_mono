@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.recordshop.infrastructure.mybatis.PaymentMapper">
+
+    <resultMap id="paymentRowMap" type="com.example.recordshop.infrastructure.mybatis.PaymentRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"/>
+            <arg column="order_id" javaType="java.util.UUID"/>
+            <arg column="amount_amount" javaType="java.math.BigDecimal"/>
+            <arg column="amount_currency" javaType="string"/>
+            <arg column="method" javaType="string"/>
+            <arg column="status" javaType="string"/>
+            <arg column="captured_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.recordshop.infrastructure.mybatis.PaymentRow">
+        INSERT INTO payments (id, order_id, amount_amount, amount_currency, method, status, captured_at)
+        VALUES (#{id}, #{orderId}, #{amountAmount}, #{amountCurrency}, #{method}, #{status}, #{capturedAt})
+    </insert>
+
+    <select id="selectById" resultMap="paymentRowMap">
+        SELECT id, order_id, amount_amount, amount_currency, method, status, captured_at
+        FROM payments WHERE id = #{id}
+    </select>
+
+    <select id="selectByOrderId" resultMap="paymentRowMap">
+        SELECT id, order_id, amount_amount, amount_currency, method, status, captured_at
+        FROM payments WHERE order_id = #{orderId}
+    </select>
+
+</mapper>

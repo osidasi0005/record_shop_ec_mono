@@ -2,12 +2,14 @@
 -- 対象はCatalog(releases/pressings/release_genres)とInventory(listings)のみ。
 -- 比較実験用のため、起動のたびに作り直す(DROP→CREATE)。データの永続化は目的外。
 
+DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS order_lines CASCADE;
 DROP TABLE IF EXISTS orders CASCADE;
 DROP TABLE IF EXISTS listings CASCADE;
 DROP TABLE IF EXISTS release_genres CASCADE;
 DROP TABLE IF EXISTS pressings CASCADE;
 DROP TABLE IF EXISTS releases CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
 
 CREATE TABLE releases (
     id                    UUID PRIMARY KEY,
@@ -96,4 +98,26 @@ CREATE TABLE order_lines (
     unit_price_amount    NUMERIC(12, 2) NOT NULL,
     unit_price_currency  VARCHAR(3)     NOT NULL,
     quantity             INTEGER        NOT NULL
+);
+
+-- order_idはOrder(別集約)への参照のため、listings.pressing_idと同様ただのUUID列として持たせる。
+CREATE TABLE payments (
+    id               UUID           PRIMARY KEY,
+    order_id         UUID           NOT NULL,
+    amount_amount    NUMERIC(12, 2) NOT NULL,
+    amount_currency  VARCHAR(3)     NOT NULL,
+    method           VARCHAR(20)    NOT NULL,
+    status           VARCHAR(20)    NOT NULL,
+    captured_at      TIMESTAMP
+);
+
+-- emailはCustomerRegistrationServiceが守るべき「システム全体で一意」という不変条件を、
+-- DB制約としても二重に保証しておく。
+CREATE TABLE customers (
+    id             UUID         PRIMARY KEY,
+    email          VARCHAR(255) NOT NULL UNIQUE,
+    password_hash  VARCHAR(255) NOT NULL,
+    display_name   VARCHAR(255) NOT NULL,
+    role           VARCHAR(20)  NOT NULL,
+    registered_at  TIMESTAMP    NOT NULL
 );

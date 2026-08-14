@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.recordshop.infrastructure.mybatis.CustomerMapper">
+
+    <resultMap id="customerRowMap" type="com.example.recordshop.infrastructure.mybatis.CustomerRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"/>
+            <arg column="email" javaType="string"/>
+            <arg column="password_hash" javaType="string"/>
+            <arg column="display_name" javaType="string"/>
+            <arg column="role" javaType="string"/>
+            <arg column="registered_at" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.recordshop.infrastructure.mybatis.CustomerRow">
+        INSERT INTO customers (id, email, password_hash, display_name, role, registered_at)
+        VALUES (#{id}, #{email}, #{passwordHash}, #{displayName}, #{role}, #{registeredAt})
+    </insert>
+
+    <select id="selectById" resultMap="customerRowMap">
+        SELECT id, email, password_hash, display_name, role, registered_at
+        FROM customers WHERE id = #{id}
+    </select>
+
+    <select id="selectByEmail" resultMap="customerRowMap">
+        SELECT id, email, password_hash, display_name, role, registered_at
+        FROM customers WHERE email = #{email}
+    </select>
+
+    <select id="countByEmail" resultType="_int">
+        SELECT COUNT(*) FROM customers WHERE email = #{email}
+    </select>
+
+</mapper>
