@@ -4,12 +4,16 @@
 外部キー(FK)制約は意図的に張っていない**(アプリケーションレベルでのID参照のみ)。
 
 この物理構造は`record-shop-ec-jpa`(JPA版)・`record-shop-ec-mybatis`(MyBatis版)の
-**どちらも同一**。ただし到達方法が異なる:
+**基本的に同一**。ただし到達方法が異なる:
 
 - **JPA版**: JPAエンティティ(`infrastructure/jpa/**`)のアノテーション(`@OneToMany`、
   `@ElementCollection`等)からHibernateが実行時にSQLを自動生成する
 - **MyBatis版**: `schema.sql`に明示的なDDLを書き、`infrastructure/mybatis/**`の
   Mapper(XML+Java)で手動SQLを書く。同じテーブル構造になるよう`schema.sql`を設計している
+
+> **例外**: `releases.artwork_url` / `pressings.artwork_url` は比較実験の枠を超える
+> アプリケーション機能として**MyBatis版の`schema.sql`にのみ**追加した列。JPA版のテーブル
+> 構造には存在しない。
 
 ## テーブル一覧
 
@@ -24,6 +28,7 @@ erDiagram
         varchar title
         varchar artist_name
         int original_release_year
+        varchar artwork_url "nullable・MyBatis版のみ"
     }
     release_genres {
         uuid release_id FK
@@ -41,6 +46,7 @@ erDiagram
         varchar media_type "enum"
         varchar speed "enum"
         int disc_count
+        varchar artwork_url "nullable・MyBatis版のみ"
     }
     listings {
         uuid id PK
