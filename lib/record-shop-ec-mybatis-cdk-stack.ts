@@ -10,7 +10,7 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as path from 'path';
 
 /**
- * record-shop-ec-domain(JPA版)と同じドメインモデル・Web層を持つMyBatis版の
+ * record-shop-ec-jpa(JPA版)と同じドメインモデル・Web層を持つMyBatis版の
  * AWSインフラ。{@link RecordShopEcCdkStack}をそのまま複製し、参照するDockerfileだけを
  * record-shop-ec-mybatisに差し替えている(VPC/RDS/ECS/ALB/CloudFrontをJPA版とは
  * 別に1セットまるごと持つ ―― AWS上でもJPA版・MyBatis版を同時に動かして比較できるようにするため)。

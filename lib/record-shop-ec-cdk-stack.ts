@@ -57,7 +57,7 @@ export class RecordShopEcCdkStack extends cdk.Stack {
 
     const cluster = new ecs.Cluster(this, 'RecordShopCluster', { vpc });
 
-    // record-shop-ec-domain の Dockerfile からイメージをビルドし、ECRへ自動プッシュする。
+    // record-shop-ec-jpa の Dockerfile からイメージをビルドし、ECRへ自動プッシュする。
     const service = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'RecordShopService', {
       cluster,
       cpu: 256,
@@ -74,7 +74,7 @@ export class RecordShopEcCdkStack extends cdk.Stack {
       // 2(AWSの最小値)まで下げることで、起動完了後すぐ(60秒)healthy判定されるようにする。
       healthCheckGracePeriod: cdk.Duration.seconds(300),
       taskImageOptions: {
-        image: ecs.ContainerImage.fromAsset(path.join(__dirname, '../../record-shop-ec-domain')),
+        image: ecs.ContainerImage.fromAsset(path.join(__dirname, '../../record-shop-ec-jpa')),
         containerPort: 8080,
         environment: {
           DB_HOST: database.instanceEndpoint.hostname,

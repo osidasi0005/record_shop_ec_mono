@@ -1,13 +1,13 @@
 # record-shop-ec-cdk
 
-[record-shop-ec-domain](../record-shop-ec-domain)(JPA版)と[record-shop-ec-mybatis](../record-shop-ec-mybatis)(MyBatis版)を
+[record-shop-ec-jpa](../record-shop-ec-jpa)(JPA版)と[record-shop-ec-mybatis](../record-shop-ec-mybatis)(MyBatis版)を
 AWS上に並行稼働させるためのCDK(TypeScript)プロジェクト。2つのスタックが独立して定義されている。
 
 ## スタック構成
 
 | スタック | 参照するDockerfile | VPC/RDS/ECS/ALB/CloudFront |
 |---|---|---|
-| `RecordShopEcCdkStack` | `../record-shop-ec-domain` | 専用の1セット |
+| `RecordShopEcCdkStack` | `../record-shop-ec-jpa` | 専用の1セット |
 | `RecordShopEcMybatisCdkStack` | `../record-shop-ec-mybatis` | 専用の1セット(JPA版とは完全に別リソース) |
 
 どちらも同じ構成(VPC + NATゲートウェイ1個 + RDS PostgreSQL db.t4g.micro + ECS Fargate 0.25vCPU/0.5GB x1台 +
