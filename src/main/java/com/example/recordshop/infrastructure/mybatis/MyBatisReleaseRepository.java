@@ -47,14 +47,28 @@ public class MyBatisReleaseRepository implements ReleaseRepository {
     @Override
     @Transactional
     public void save(Release release) {
-        // 比較実験の簡略化として新規登録のみを想定する(更新・差分反映は対象外)。
-        mapper.insertRelease(new ReleaseRow(
-                release.releaseId().value(), release.title(), release.artistName(), release.originalReleaseYear()));
+        UUID releaseId = release.releaseId().value();
+        ReleaseRow row = new ReleaseRow(releaseId, release.title(), release.artistName(),
+                release.originalReleaseYear());
+
+        // JPAならdirty checkingが自動でやってくれる「新規か更新か」の判定を、ここでは
+        // 明示的なSELECTで自分の手で行う必要がある。addPressing()等で集約が変化した後の
+        // 再saveがこの分岐を通り、子コレクション(genres/pressings)は全delete→re-insertで
+        // 最新の状態に揃える(MyBatisにはJPAの@OneToMany cascadeに相当する自動反映が無いため)。
+        boolean isNew = mapper.selectReleaseById(releaseId) == null;
+        if (isNew) {
+            mapper.insertRelease(row);
+        } else {
+            mapper.updateRelease(row);
+            mapper.deleteGenresByReleaseId(releaseId);
+            mapper.deletePressingsByReleaseId(releaseId);
+        }
+
         for (String genre : release.genres()) {
-            mapper.insertGenre(release.releaseId().value(), genre);
+            mapper.insertGenre(releaseId, genre);
         }
         for (Pressing pressing : release.pressings()) {
-            mapper.insertPressing(toPressingRow(pressing, release.releaseId().value()));
+            mapper.insertPressing(toPressingRow(pressing, releaseId));
         }
     }
 

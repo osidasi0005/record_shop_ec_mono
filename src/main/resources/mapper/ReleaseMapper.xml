@@ -52,6 +52,23 @@
                 #{matrixRunout}, #{reissue}, #{mediaType}, #{speed}, #{discCount})
     </insert>
 
+    <!-- MyBatisにはJPAのようなdirty checking(変更検知)が無いため、addPressing()等で
+         集約が変化した後の再saveは「既存行を更新、子コレクションは全delete→re-insert」で表現する
+         (JPAの@OneToMany(cascade=ALL,orphanRemoval=true)の実質的な代替)。 -->
+    <update id="updateRelease" parameterType="com.example.recordshop.infrastructure.mybatis.ReleaseRow">
+        UPDATE releases SET title = #{title}, artist_name = #{artistName},
+                             original_release_year = #{originalReleaseYear}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteGenresByReleaseId">
+        DELETE FROM release_genres WHERE release_id = #{releaseId}
+    </delete>
+
+    <delete id="deletePressingsByReleaseId">
+        DELETE FROM pressings WHERE release_id = #{releaseId}
+    </delete>
+
     <select id="selectReleaseById" resultMap="releaseRowMap">
         SELECT id, title, artist_name, original_release_year FROM releases WHERE id = #{id}
     </select>

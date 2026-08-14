@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>管理画面: 作品一覧 - Record Shop</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main>
+    <h1>管理画面: 作品一覧</h1>
+    <p><a class="btn" th:href="@{/admin/releases/new}">+ 新しい作品を登録</a></p>
+
+    <p class="muted" th:if="${#lists.isEmpty(releases)}">まだ作品が登録されていません。</p>
+
+    <div class="card" th:if="${!#lists.isEmpty(releases)}">
+        <table class="simple">
+            <thead>
+            <tr>
+                <th>タイトル</th>
+                <th>アーティスト</th>
+                <th>発売年</th>
+                <th>プレス数</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="release : ${releases}">
+                <td th:text="${release.title}">タイトル</td>
+                <td th:text="${release.artistName}">アーティスト</td>
+                <td th:text="${release.originalReleaseYear}">1970</td>
+                <td th:text="${#lists.size(release.pressings)}">0</td>
+                <td><a th:href="@{'/admin/releases/' + ${release.releaseId}}">管理</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

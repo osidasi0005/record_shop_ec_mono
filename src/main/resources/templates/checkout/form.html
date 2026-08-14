@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>ご購入手続き - Record Shop</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main>
+    <h1>ご購入手続き</h1>
+
+    <div class="card">
+        <h3>ご注文内容</h3>
+        <table class="simple">
+            <tbody>
+            <tr th:each="line : ${lines}">
+                <td>
+                    <div th:text="${line.releaseTitle}">タイトル</div>
+                    <div class="muted" th:text="${line.artistName} + ' / ' + ${line.catalogNumber} + ' / ' + ${line.conditionType}">詳細</div>
+                </td>
+                <td th:text="${line.quantity} + '点'">1点</td>
+                <td th:text="${line.lineTotal}">JPY 4200</td>
+            </tr>
+            </tbody>
+        </table>
+        <p style="text-align:right; margin-top:0.8rem;">
+            合計: <strong th:text="${total}">JPY 0</strong>
+        </p>
+    </div>
+
+    <div class="card form-card" style="margin-left:0;">
+        <h3>配送先・請求先</h3>
+        <p class="muted">「歩く骨格」フェーズの簡易実装のため、配送先と請求先は同一の住所として扱います。</p>
+
+        <form th:action="@{/checkout}" th:object="${checkoutForm}" method="post">
+            <div class="field">
+                <label for="recipientName">お名前</label>
+                <input type="text" id="recipientName" th:field="*{recipientName}" required/>
+            </div>
+            <div class="field">
+                <label for="postalCode">郵便番号</label>
+                <input type="text" id="postalCode" th:field="*{postalCode}" required placeholder="100-0001"/>
+            </div>
+            <div class="field">
+                <label for="prefecture">都道府県</label>
+                <input type="text" id="prefecture" th:field="*{prefecture}" required/>
+            </div>
+            <div class="field">
+                <label for="city">市区町村</label>
+                <input type="text" id="city" th:field="*{city}" required/>
+            </div>
+            <div class="field">
+                <label for="addressLine">番地・建物名</label>
+                <input type="text" id="addressLine" th:field="*{addressLine}" required/>
+            </div>
+            <div class="field">
+                <label for="country">国</label>
+                <input type="text" id="country" th:field="*{country}" required/>
+            </div>
+            <button type="submit">注文を確定する</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

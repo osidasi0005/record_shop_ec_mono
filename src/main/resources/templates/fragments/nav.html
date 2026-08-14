@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<header class="site-header" th:fragment="nav">
+    <a class="brand" th:href="@{/catalog}">💿 Record Shop</a>
+    <nav>
+        <a th:href="@{/catalog}">商品一覧</a>
+        <a th:href="@{/cart}">カート</a>
+        <span sec:authorize="isAuthenticated()">
+            <a th:href="@{/orders}">注文履歴</a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/releases}">管理画面</a>
+            <span sec:authentication="principal.displayName"></span>さん
+            <form th:action="@{/logout}" method="post" style="display:inline">
+                <button type="submit" style="background:none;border:none;color:inherit;text-decoration:underline;cursor:pointer;padding:0;font:inherit;">ログアウト</button>
+            </form>
+        </span>
+        <span sec:authorize="!isAuthenticated()">
+            <a th:href="@{/login}">ログイン</a>
+            <a th:href="@{/register}">会員登録</a>
+        </span>
+    </nav>
+</header>
+</body>
+</html>

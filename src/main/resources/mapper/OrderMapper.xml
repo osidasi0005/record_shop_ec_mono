@@ -63,6 +63,19 @@
                 #{vinylGrade}, #{sleeveGrade}, #{unitPriceAmount}, #{unitPriceCurrency}, #{quantity})
     </insert>
 
+    <!-- markPaid()等でOrderのstatusが変わった後の再saveで使う。order_linesは確定後不変なので更新しない。 -->
+    <update id="updateOrder" parameterType="com.example.recordshop.infrastructure.mybatis.OrderRow">
+        UPDATE orders
+        SET status = #{status},
+            ship_recipient_name = #{shipRecipientName}, ship_postal_code = #{shipPostalCode},
+            ship_prefecture = #{shipPrefecture}, ship_city = #{shipCity},
+            ship_address_line = #{shipAddressLine}, ship_country = #{shipCountry},
+            bill_recipient_name = #{billRecipientName}, bill_postal_code = #{billPostalCode},
+            bill_prefecture = #{billPrefecture}, bill_city = #{billCity},
+            bill_address_line = #{billAddressLine}, bill_country = #{billCountry}
+        WHERE id = #{id}
+    </update>
+
     <select id="selectOrderById" resultMap="orderRowMap">
         SELECT id, customer_id, status, placed_at,
                ship_recipient_name, ship_postal_code, ship_prefecture, ship_city, ship_address_line, ship_country,

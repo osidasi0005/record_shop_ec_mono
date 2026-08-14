@@ -1,0 +1,184 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #f5f3ef;
+    color: #2b2620;
+}
+
+header.site-header {
+    background: #1f1b16;
+    color: #f5f3ef;
+    padding: 0.9rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+header.site-header a {
+    color: #f5f3ef;
+    text-decoration: none;
+}
+
+header.site-header .brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+header.site-header nav {
+    display: flex;
+    gap: 1.2rem;
+    align-items: center;
+    font-size: 0.92rem;
+}
+
+header.site-header nav a:hover {
+    text-decoration: underline;
+}
+
+main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+}
+
+h1 {
+    font-size: 1.6rem;
+    margin-bottom: 1.2rem;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #e4ddd2;
+    border-radius: 10px;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1rem;
+}
+
+.form-card {
+    max-width: 420px;
+    margin: 2rem auto;
+}
+
+.field {
+    margin-bottom: 1rem;
+}
+
+.field label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.field input, .field select, .field textarea {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid #cfc6b8;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+button, .btn {
+    display: inline-block;
+    background: #8a4b2f;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.3rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+button:hover, .btn:hover {
+    background: #713a22;
+}
+
+.btn-secondary {
+    background: #d8cfc0;
+    color: #2b2620;
+}
+
+.btn-secondary:hover {
+    background: #c9bda9;
+}
+
+.error {
+    background: #fbe4e2;
+    color: #9a2c1f;
+    border: 1px solid #f0b9b3;
+    border-radius: 6px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.notice {
+    background: #e6f1e6;
+    color: #2b5c2b;
+    border: 1px solid #b9dcb9;
+    border-radius: 6px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.release-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.release-card {
+    background: #fff;
+    border: 1px solid #e4ddd2;
+    border-radius: 10px;
+    padding: 1.1rem 1.2rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.release-card:hover {
+    border-color: #8a4b2f;
+}
+
+.release-card .title {
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+
+.release-card .artist {
+    color: #6b6153;
+    font-size: 0.9rem;
+}
+
+.muted {
+    color: #6b6153;
+    font-size: 0.88rem;
+}
+
+table.simple {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+table.simple th, table.simple td {
+    text-align: left;
+    padding: 0.55rem 0.6rem;
+    border-bottom: 1px solid #e4ddd2;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    background: #e6f1e6;
+    color: #2b5c2b;
+}

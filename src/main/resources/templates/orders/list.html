@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>注文履歴 - Record Shop</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main>
+    <h1>注文履歴</h1>
+
+    <p class="muted" th:if="${#lists.isEmpty(orders)}">まだ注文はありません。</p>
+
+    <div class="card" th:if="${!#lists.isEmpty(orders)}">
+        <table class="simple">
+            <thead>
+            <tr>
+                <th>注文日時</th>
+                <th>注文番号</th>
+                <th>ステータス</th>
+                <th>合計金額</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="order : ${orders}">
+                <td th:text="${order.placedAt}">2026-01-01T12:00:00Z</td>
+                <td th:text="${#strings.substring(order.orderId.toString(), 0, 8)} + '…'">abcd1234…</td>
+                <td><span class="status-badge" th:text="${order.status}">PAID</span></td>
+                <td th:text="${order.totalAmount}">JPY 4200</td>
+                <td><a th:href="@{'/orders/' + ${order.orderId}}">詳細</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

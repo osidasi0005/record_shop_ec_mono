@@ -33,7 +33,9 @@ import java.util.UUID;
  * 徹底している。注文件数分ループして{@code selectOrderLinesByOrderId}を呼ぶと典型的なN+1になるため、
  * 該当する注文IDをまとめてIN句で1回のSELECTにし、Java側でグルーピングする。
  *
- * <p>比較実験の簡略化として新規登録のみを想定する(Release/Listingと同様、更新は対象外)。
+ * <p>{@link #save(Order)} は新規登録・更新の両方に対応する。決済確定(markPaid)等で
+ * 既存Orderのstatusが変わった後の再saveは、既存行の有無をSELECTで判定してUPDATEに振り分ける
+ * (JPAならdirty checkingが自動でやることを、ここでは明示的に書く必要がある)。
  */
 @Repository
 public class MyBatisOrderRepository implements OrderRepository {
@@ -47,9 +49,19 @@ public class MyBatisOrderRepository implements OrderRepository {
     @Override
     @Transactional
     public void save(Order order) {
-        mapper.insertOrder(toOrderRow(order));
-        for (OrderLine line : order.lines()) {
-            mapper.insertOrderLine(toOrderLineRow(order.orderId().value(), line));
+        UUID orderId = order.orderId().value();
+        OrderRow row = toOrderRow(order);
+
+        // markPaid()/changeShippingAddress()等で確定済みOrderの状態が変わった後の再saveがここを通る。
+        // order_linesはOrder確定後は不変(PressingSnapshotが凍結済み)なので、新規時のみ挿入する。
+        boolean isNew = mapper.selectOrderById(orderId) == null;
+        if (isNew) {
+            mapper.insertOrder(row);
+            for (OrderLine line : order.lines()) {
+                mapper.insertOrderLine(toOrderLineRow(orderId, line));
+            }
+        } else {
+            mapper.updateOrder(row);
         }
     }
 

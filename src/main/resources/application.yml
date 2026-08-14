@@ -1,3 +1,7 @@
+# server.forward-headers-strategy はあえて使わない(=デフォルトのnone)。record-shop-ec-domain(JPA版)と
+# 同じ理由: CloudFront(HTTPS)→ALB→Fargate(HTTP)構成ではALBがX-Forwarded-Protoを毎回上書きしてしまうため、
+# 代わりにCloudFrontProtoFilter(infrastructure.web、JPA版から無修正コピー)でscheme/isSecureを直接上書きする。
+
 spring:
   application:
     name: record-shop-ec-mybatis
@@ -22,3 +26,20 @@ mybatis:
 logging:
   level:
     com.example.recordshop.infrastructure.mybatis: debug
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # ALB/ECSのヘルスチェックが叩く /actuator/health のみ公開する
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+app:
+  admin:
+    # 起動時に管理者アカウントを1件だけ起票する(AdminAccountSeeder)。
+    # 未設定のままだと /admin/** に入れる会員が誰もいない状態になる。
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}

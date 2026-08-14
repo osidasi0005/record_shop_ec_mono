@@ -42,6 +42,35 @@
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- 会員登録・ログイン(フォーム認証)、パスワードハッシュ化(BCrypt)に使う -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- サーバーサイドレンダリングの画面(商品一覧・カート・購入・管理画面等)用 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- Thymeleaf内でSpring Securityのsec:authorize等を使うための連携ライブラリ -->
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+
+        <!-- ヘルスチェック用に /actuator/health を提供する -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- 本番/ローカルDocker ComposeのPostgreSQLに接続する -->
         <dependency>
             <groupId>org.postgresql</groupId>

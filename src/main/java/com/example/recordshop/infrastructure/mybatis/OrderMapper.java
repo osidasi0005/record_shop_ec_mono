@@ -13,6 +13,8 @@ public interface OrderMapper {
 
     void insertOrderLine(OrderLineRow row);
 
+    void updateOrder(OrderRow row);
+
     OrderRow selectOrderById(@Param("id") UUID id);
 
     List<OrderLineRow> selectOrderLinesByOrderId(@Param("orderId") UUID orderId);

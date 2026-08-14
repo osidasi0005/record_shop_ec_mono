@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="'管理画面: ' + ${release.title}">管理画面: 作品詳細</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main>
+    <p><a th:href="@{/admin/releases}">&larr; 作品一覧に戻る</a></p>
+
+    <h1 th:text="${release.title}">タイトル</h1>
+    <p class="muted" th:text="${release.artistName} + ' / ' + ${release.originalReleaseYear}">アーティスト</p>
+
+    <p class="error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
+    <div class="card" th:each="entry : ${pressingListings}">
+        <h3 th:text="${entry.key.labelName} + ' / ' + ${entry.key.catalogNumber}">レーベル / 品番</h3>
+        <p class="muted">
+            <span th:text="${entry.key.country}">US</span> ・
+            <span th:text="${entry.key.pressYear}">1959</span>年プレス
+            <span th:if="${entry.key.reissue}">(reissue)</span>
+        </p>
+
+        <table class="simple" th:if="${!#lists.isEmpty(entry.value)}">
+            <thead>
+            <tr>
+                <th>コンディション</th>
+                <th>価格</th>
+                <th>在庫/状態</th>
+                <th>ステータス</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="listing : ${entry.value}">
+                <td th:text="${listing.conditionType}">NEW</td>
+                <td th:text="${listing.price}">JPY 4200</td>
+                <td th:text="${listing.conditionType.name() == 'NEW'} ? ${listing.stockQuantity} : (${listing.vinylGrade} + ' / ' + ${listing.sleeveGrade})">5</td>
+                <td><span class="status-badge" th:text="${listing.status}">DRAFT</span></td>
+                <td>
+                    <form th:if="${listing.status.name() == 'DRAFT'}" th:action="@{'/admin/listings/' + ${listing.listingId} + '/publish'}" method="post">
+                        <button type="submit" class="btn-secondary">公開する</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <details style="margin-top:0.8rem;">
+            <summary class="muted">この版に出品を追加する</summary>
+            <form th:action="@{/admin/listings}" method="post" style="margin-top:0.8rem;">
+                <input type="hidden" name="pressingId" th:value="${entry.key.pressingId}"/>
+                <div class="field">
+                    <label>コンディション</label>
+                    <select name="conditionType">
+                        <option value="NEW">NEW</option>
+                        <option value="USED">USED</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>価格(円)</label>
+                    <input type="number" name="priceAmount" step="1" min="0" required/>
+                </div>
+                <div class="field">
+                    <label>在庫数(NEWのみ)</label>
+                    <input type="number" name="initialStock" min="1" value="1"/>
+                </div>
+                <div class="field">
+                    <label>盤面グレード(USEDのみ)</label>
+                    <select name="vinylGrade">
+                        <option value=""></option>
+                        <option th:each="grade : ${T(com.example.recordshop.domain.inventory.GoldmineGrade).values()}"
+                                th:value="${grade}" th:text="${grade}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>ジャケットグレード(USEDのみ)</label>
+                    <select name="sleeveGrade">
+                        <option value=""></option>
+                        <option th:each="grade : ${T(com.example.recordshop.domain.inventory.GoldmineGrade).values()}"
+                                th:value="${grade}" th:text="${grade}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>出品メモ(USEDのみ)</label>
+                    <input type="text" name="sellerNote"/>
+                </div>
+                <button type="submit" class="btn-secondary">出品を追加</button>
+            </form>
+        </details>
+    </div>
+
+    <div class="card">
+        <h3>新しいプレス版を追加</h3>
+        <form th:action="@{'/admin/releases/' + ${release.releaseId} + '/pressings'}" th:object="${pressingForm}" method="post">
+            <div class="field">
+                <label for="labelName">レーベル名</label>
+                <input type="text" id="labelName" th:field="*{labelName}" required/>
+            </div>
+            <div class="field">
+                <label for="catalogNumber">品番</label>
+                <input type="text" id="catalogNumber" th:field="*{catalogNumber}" required/>
+            </div>
+            <div class="field">
+                <label for="country">製造国</label>
+                <input type="text" id="country" th:field="*{country}" required placeholder="US"/>
+            </div>
+            <div class="field">
+                <label for="pressYear">プレス年</label>
+                <input type="number" id="pressYear" th:field="*{pressYear}" required/>
+            </div>
+            <div class="field">
+                <label for="matrixRunout">マトリクス番号(任意)</label>
+                <input type="text" id="matrixRunout" th:field="*{matrixRunout}"/>
+            </div>
+            <div class="field">
+                <label><input type="checkbox" th:field="*{reissue}" style="width:auto;"/> 再発盤(reissue)</label>
+            </div>
+            <div class="field">
+                <label for="mediaType">媒体</label>
+                <select id="mediaType" th:field="*{mediaType}">
+                    <option th:each="type : ${T(com.example.recordshop.domain.catalog.MediaType).values()}"
+                            th:value="${type}" th:text="${type}"></option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="speed">回転数</label>
+                <select id="speed" th:field="*{speed}">
+                    <option th:each="s : ${T(com.example.recordshop.domain.catalog.Speed).values()}"
+                            th:value="${s}" th:text="${s}"></option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="discCount">枚数</label>
+                <input type="number" id="discCount" th:field="*{discCount}" min="1" required/>
+            </div>
+            <button type="submit">プレス版を追加</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

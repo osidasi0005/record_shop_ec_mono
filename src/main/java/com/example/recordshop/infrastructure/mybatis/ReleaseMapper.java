@@ -20,6 +20,12 @@ public interface ReleaseMapper {
 
     void insertPressing(PressingRow row);
 
+    void updateRelease(ReleaseRow row);
+
+    void deleteGenresByReleaseId(@Param("releaseId") UUID releaseId);
+
+    void deletePressingsByReleaseId(@Param("releaseId") UUID releaseId);
+
     ReleaseRow selectReleaseById(@Param("id") UUID id);
 
     List<GenreRow> selectGenresByReleaseId(@Param("releaseId") UUID releaseId);
