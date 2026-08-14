@@ -3,7 +3,7 @@
 実際にRDS(PostgreSQL)上に作られるテーブル構造。ドメイン集約の境界に合わせて、**集約をまたぐ
 外部キー(FK)制約は意図的に張っていない**(アプリケーションレベルでのID参照のみ)。
 
-この物理構造は`record-shop-ec-domain`(JPA版)・`record-shop-ec-mybatis`(MyBatis版)の
+この物理構造は`record-shop-ec-jpa`(JPA版)・`record-shop-ec-mybatis`(MyBatis版)の
 **どちらも同一**。ただし到達方法が異なる:
 
 - **JPA版**: JPAエンティティ(`infrastructure/jpa/**`)のアノテーション(`@OneToMany`、

@@ -5,7 +5,7 @@
 CASCADE(親子関係の連鎖操作)はコンテキスト内で完結させる。
 
 > このドメイン層(`domain/**`)はDB・フレームワークに一切依存しない素のJavaで実装されており、
-> `record-shop-ec-domain`(JPA版)と`record-shop-ec-mybatis`(MyBatis版)で**完全に同一**
+> `record-shop-ec-jpa`(JPA版)と`record-shop-ec-mybatis`(MyBatis版)で**完全に同一**
 > (無修正コピー)。以下の図・不変条件はどちらのバージョンにもそのまま当てはまる。
 
 ## コンテキスト全体図

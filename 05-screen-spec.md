@@ -1,8 +1,8 @@
 # 画面仕様書
 
-`record-shop-ec-domain`の全画面(Thymeleafでレンダリングされるブラウザ向け画面)と、
+`record-shop-ec-jpa`の全画面(Thymeleafでレンダリングされるブラウザ向け画面)と、
 参考としてREST API(`/api/**`)のURL一覧をまとめる。認証要否は
-[`SecurityConfig`](../record-shop-ec-domain/src/main/java/com/example/recordshop/config/SecurityConfig.java)
+[`SecurityConfig`](../record-shop-ec-jpa/src/main/java/com/example/recordshop/config/SecurityConfig.java)
 の設定に基づく。スクリーンショットは実際にデプロイ済みのCloudFront URLから撮影した
 (データはテスト用: `Kind of Blue` / Miles Davis を購入した状態)。
 

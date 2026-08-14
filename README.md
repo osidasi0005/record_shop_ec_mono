@@ -1,6 +1,6 @@
 # レコード販売ECサイト 仕様書
 
-`record-shop-ec-domain`(DDD実装、Spring Boot + Thymeleaf)と`record-shop-ec-cdk`
+`record-shop-ec-jpa`(DDD実装、Spring Boot + Thymeleaf)と`record-shop-ec-cdk`
 (AWS CDK、TypeScript)からなるレコード販売ECサイトの仕様書一式。
 
 会員登録・商品閲覧・カート・チェックアウト・決済・注文履歴・出品者向け管理画面まで揃った
@@ -8,7 +8,7 @@ ECサイトとして、AWS上にCloudFront経由のHTTPSで公開されている
 プロジェクト)。
 
 **永続化層違いの比較版として`record-shop-ec-mybatis`が存在する。** ドメイン層・Web層は
-`record-shop-ec-domain`(JPA版)から無修正コピーしており、永続化層だけをMyBatisで
+`record-shop-ec-jpa`(JPA版)から無修正コピーしており、永続化層だけをMyBatisで
 再実装した(JPA vs MyBatisの技術比較が目的)。そのため本ドキュメント一式(ドメイン図・
 クラス図・画面仕様書等)は**基本的にMyBatis版にもそのまま当てはまる**。永続化技術に
 依存する箇所(ER図・インフラ構成図)のみ、両バージョンの違いを明記している。
@@ -24,7 +24,7 @@ ECサイトとして、AWS上にCloudFront経由のHTTPSで公開されている
 
 ## 関連リポジトリ
 
-- [record-shop-ec-domain](../record-shop-ec-domain) ― ドメイン層・Web層(Spring Boot)+ JPA永続化層
+- [record-shop-ec-jpa](../record-shop-ec-jpa) ― ドメイン層・Web層(Spring Boot)+ JPA永続化層
 - [record-shop-ec-mybatis](../record-shop-ec-mybatis) ― 同ドメイン層・Web層 + MyBatis永続化層(比較実験用)
 - [record-shop-ec-cdk](../record-shop-ec-cdk) ― AWSインフラ定義(CDK)。JPA版・MyBatis版それぞれ独立したスタックを持つ
 

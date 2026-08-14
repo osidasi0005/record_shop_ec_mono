@@ -3,7 +3,7 @@
 `record-shop-ec-cdk`(AWS CDK、TypeScript)で定義されているAWS構成。**2つの独立したスタック**
 (`RecordShopEcCdkStack`=JPA版、`RecordShopEcMybatisCdkStack`=MyBatis版)を持ち、それぞれが
 VPC・RDS・ECS Fargate・ALB・CloudFrontをまるごと1セット持つ(リソースの共有は一切無い)。
-参照するDockerイメージのビルド元(`record-shop-ec-domain`か`record-shop-ec-mybatis`か)以外、
+参照するDockerイメージのビルド元(`record-shop-ec-jpa`か`record-shop-ec-mybatis`か)以外、
 2つのスタックの構成は完全に同一。
 
 **現在の稼働状況**: JPA版スタック(`RecordShopEcCdkStack`)はコスト最小化のため`cdk destroy`
@@ -95,7 +95,7 @@ sequenceDiagram
 [`record-shop-ec-cdk-stack.ts`](../record-shop-ec-cdk/lib/record-shop-ec-cdk-stack.ts)(JPA版)/
 [`record-shop-ec-mybatis-cdk-stack.ts`](../record-shop-ec-cdk/lib/record-shop-ec-mybatis-cdk-stack.ts)(MyBatis版)
 のCloudFront Function定義(内容は同一)、
-[`CloudFrontProtoFilter.java`](../record-shop-ec-domain/src/main/java/com/example/recordshop/infrastructure/web/CloudFrontProtoFilter.java)
+[`CloudFrontProtoFilter.java`](../record-shop-ec-jpa/src/main/java/com/example/recordshop/infrastructure/web/CloudFrontProtoFilter.java)
 (アプリ側の対応フィルタ、両バージョンに無修正コピー)。
 
 ## 主要リソースの設定値(JPA版・MyBatis版共通)
@@ -110,7 +110,7 @@ sequenceDiagram
 | Secrets Manager | RDS認証情報(自動生成)、Adminパスワード(自動生成20文字) | 平文パスワードをコード・環境変数に書かない |
 
 これらの設定値はJPA版で試行錯誤して確定させたもの(クラッシュループ等を実際に起こして
-調整した経緯は[record-shop-ec-domain](../record-shop-ec-domain)のREADME参照)を、MyBatis版
+調整した経緯は[record-shop-ec-jpa](../record-shop-ec-jpa)のREADME参照)を、MyBatis版
 スタックにもそのまま踏襲している。
 
 ## コスト構造
