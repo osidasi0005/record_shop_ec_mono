@@ -18,6 +18,27 @@
 
 新規に試したい場合は`/register`から自由にアカウントを作成できる。
 
+### サンプルデータの顧客アカウント
+
+アプリ起動時に`SampleDataSeeder`(`infrastructure.devdata`)が自動投入するサンプル顧客4名。
+全員ロールはCUSTOMER、パスワードは共通。
+
+| 表示名 | メールアドレス(ログインID) | パスワード |
+|---|---|---|
+| 田中 花子 | `tanaka.hanako@example.com` | `Passw0rd!2024` |
+| 佐藤 次郎 | `sato.jiro@example.com` | `Passw0rd!2024` |
+| 鈴木 美咲 | `suzuki.misaki@example.com` | `Passw0rd!2024` |
+| 高橋 健太 | `takahashi.kenta@example.com` | `Passw0rd!2024` |
+
+各アカウントには異なる状態の注文が1件ずつ紐づいており、ログイン後`/orders`から確認できる。
+
+| アカウント | 注文の状態 |
+|---|---|
+| 田中 花子 | Thriller(Used)を注文、銀行振込未払いのまま(Order: PENDING / Payment: PENDING) |
+| 佐藤 次郎 | Selected Ambient Works 85-92(Used)を注文、決済完了(Order: PAID / Payment: CAPTURED) |
+| 鈴木 美咲 | 複数明細(NEW×2 + USED×1)を注文、発送済み(Order: SHIPPED / Payment: CAPTURED) |
+| 高橋 健太 | Nevermind(NEW)を注文後に返金・キャンセル(Order: CANCELLED / Payment: REFUNDED) |
+
 ## 管理者向け(出品者向け管理画面)
 
 | 項目 | 内容 |
@@ -26,7 +47,7 @@
 | 管理画面の入口 | `{ベースURL}/admin/releases`(作品一覧) |
 | アカウントの作り方 | 自己登録では作成できない。アプリ起動時に`AdminAccountSeeder`が環境変数
   (`ADMIN_EMAIL`/`ADMIN_PASSWORD`)から1件だけ自動作成する |
-| ローカル(Docker Compose)の初期アカウント | `admin@example.com` / `admin12345`(`docker-compose.yml`に平文設定、ローカル専用) |
+| ローカル(Docker Compose)の初期アカウント | `admin@example.com` / `Passw0rd!2024`(`docker-compose.yml`に平文設定、ローカル専用。サンプル顧客アカウントとパスワードを統一している) |
 | AWS本番環境のアカウント | メールアドレスは`admin@example.com`固定(CDKスタックの環境変数)。
   パスワードはAWS Secrets Managerで自動生成される(シークレット名: `AdminPassword...`)。
   平文をコード・ドキュメント上には置かない方針のため、必要なつどAWSコンソール
