@@ -29,9 +29,9 @@ import java.util.UUID;
 /**
  * {@link OrderRepository}(ドメイン層のポート)のMyBatisアダプタ実装。
  *
- * <p>{@link #findByCustomerId(CustomerId)} は、Release/Listingと同じ原則で「N+1にしない」設計を
- * 徹底している。注文件数分ループして{@code selectOrderLinesByOrderId}を呼ぶと典型的なN+1になるため、
- * 該当する注文IDをまとめてIN句で1回のSELECTにし、Java側でグルーピングする。
+ * <p>{@link #findByCustomerId(CustomerId)} と {@link #findAll()} は、Release/Listingと同じ原則で
+ * 「N+1にしない」設計を徹底している。注文件数分ループして{@code selectOrderLinesByOrderId}を呼ぶと
+ * 典型的なN+1になるため、該当する注文IDをまとめてIN句で1回のSELECTにし、Java側でグルーピングする。
  *
  * <p>{@link #save(Order)} は新規登録・更新の両方に対応する。決済確定(markPaid)等で
  * 既存Orderのstatusが変わった後の再saveは、既存行の有無をSELECTで判定してUPDATEに振り分ける
@@ -81,7 +81,20 @@ public class MyBatisOrderRepository implements OrderRepository {
     @Override
     @Transactional(readOnly = true)
     public List<Order> findByCustomerId(CustomerId customerId) {
-        List<OrderRow> orderRows = mapper.selectOrdersByCustomerId(customerId.value());
+        return toDomainList(mapper.selectOrdersByCustomerId(customerId.value()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Order> findAll() {
+        return toDomainList(mapper.selectAllOrders());
+    }
+
+    /**
+     * OrderRowのリストをOrderのリストに組み立てる。findByCustomerId/findAllで共通の
+     * 「N+1にしない」手順(該当する注文IDをまとめてIN句で1回のSELECTにしてJava側でグルーピング)。
+     */
+    private List<Order> toDomainList(List<OrderRow> orderRows) {
         if (orderRows.isEmpty()) {
             return List.of();
         }

@@ -28,4 +28,9 @@ public final class InMemoryOrderRepository implements OrderRepository {
     public List<Order> findByCustomerId(CustomerId customerId) {
         return store.values().stream().filter(o -> o.customerId().equals(customerId)).toList();
     }
+
+    @Override
+    public List<Order> findAll() {
+        return List.copyOf(store.values());
+    }
 }

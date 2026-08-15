@@ -88,4 +88,28 @@ class MyBatisOrderRepositoryTest {
                 .extracting(l -> l.pressingSnapshot().releaseTitle())
                 .containsExactlyInAnyOrder("A Love Supreme", "Blue Train");
     }
+
+    @Test
+    void findAll_で異なる顧客の注文も含めて全件_明細を取り違えなく取得できる() {
+        Order order1 = Order.place(OrderId.generate(), CustomerId.generate(),
+                List.of(line("Kind of Blue", Money.jpy(4200), 1)),
+                address("渋谷区"), address("渋谷区"), Instant.now());
+        Order order2 = Order.place(OrderId.generate(), CustomerId.generate(),
+                List.of(line("A Love Supreme", Money.jpy(3800), 1), line("Blue Train", Money.jpy(3500), 2)),
+                address("大阪市"), address("大阪市"), Instant.now());
+        repository.save(order1);
+        repository.save(order2);
+
+        List<Order> found = repository.findAll();
+
+        assertThat(found).extracting(Order::orderId)
+                .contains(order1.orderId(), order2.orderId());
+        Order foundOrder2 = found.stream()
+                .filter(o -> o.orderId().equals(order2.orderId()))
+                .findFirst().orElseThrow();
+        assertThat(foundOrder2.lines()).hasSize(2);
+        assertThat(foundOrder2.lines())
+                .extracting(l -> l.pressingSnapshot().releaseTitle())
+                .containsExactlyInAnyOrder("A Love Supreme", "Blue Train");
+    }
 }

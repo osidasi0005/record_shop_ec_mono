@@ -21,6 +21,9 @@ public interface OrderMapper {
 
     List<OrderRow> selectOrdersByCustomerId(@Param("customerId") UUID customerId);
 
+    /** 管理画面の注文一覧用。全顧客の注文を新しい順に返す。 */
+    List<OrderRow> selectAllOrders();
+
     /**
      * findByCustomerId()をN+1にしないための一括取得用メソッド。
      * 注文件数分ループしてlinesを取得する実装にすると、Release/Listingと同じN+1問題が再現するため、

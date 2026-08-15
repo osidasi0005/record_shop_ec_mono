@@ -97,6 +97,13 @@
         FROM orders WHERE customer_id = #{customerId} ORDER BY placed_at DESC
     </select>
 
+    <select id="selectAllOrders" resultMap="orderRowMap">
+        SELECT id, customer_id, status, placed_at,
+               ship_recipient_name, ship_postal_code, ship_prefecture, ship_city, ship_address_line, ship_country,
+               bill_recipient_name, bill_postal_code, bill_prefecture, bill_city, bill_address_line, bill_country
+        FROM orders ORDER BY placed_at DESC
+    </select>
+
     <select id="selectOrderLinesByOrderIds" resultMap="orderLineRowMap">
         SELECT order_id, listing_id, release_title, artist_name, label_name, catalog_number, pressing_country,
                press_year, media_type, speed, disc_count, condition_type, vinyl_grade, sleeve_grade,

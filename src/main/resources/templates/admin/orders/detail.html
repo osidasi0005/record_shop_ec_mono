@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>管理画面: 注文詳細 - Record Shop</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main>
+    <p><a th:href="@{/admin/orders}">&larr; 注文一覧に戻る</a></p>
+
+    <h1>管理画面: 注文詳細</h1>
+
+    <p class="error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+    <p class="notice" th:if="${notice}" th:text="${notice}"></p>
+
+    <div class="card">
+        <p>
+            注文番号: <span th:text="${order.orderId}">order-id</span><br/>
+            注文日時: <span th:text="${order.placedAt}">2026-01-01T12:00:00Z</span><br/>
+            ステータス: <span class="status-badge" th:text="${order.status}">PAID</span>
+        </p>
+
+        <form th:if="${order.status.name() == 'PENDING'}"
+              th:action="@{'/admin/orders/' + ${order.orderId} + '/mark-paid'}" method="post" style="display:inline-block; margin-right:0.5rem;">
+            <button type="submit">入金を確認する</button>
+        </form>
+        <form th:if="${order.status.name() == 'PAID'}"
+              th:action="@{'/admin/orders/' + ${order.orderId} + '/mark-shipped'}" method="post" style="display:inline-block; margin-right:0.5rem;">
+            <button type="submit">発送済みにする</button>
+        </form>
+        <form th:if="${order.status.name() == 'SHIPPED'}"
+              th:action="@{'/admin/orders/' + ${order.orderId} + '/mark-delivered'}" method="post" style="display:inline-block; margin-right:0.5rem;">
+            <button type="submit">配達完了にする</button>
+        </form>
+        <form th:if="${order.status.name() == 'PENDING' || order.status.name() == 'PAID'}"
+              th:action="@{'/admin/orders/' + ${order.orderId} + '/cancel'}" method="post" style="display:inline-block;">
+            <button type="submit" class="btn-secondary">注文をキャンセル</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>ご注文明細</h3>
+        <table class="simple">
+            <thead>
+            <tr>
+                <th>作品</th>
+                <th>コンディション</th>
+                <th>単価</th>
+                <th>数量</th>
+                <th>小計</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="line : ${order.lines}">
+                <td>
+                    <div th:text="${line.pressingSnapshot.releaseTitle}">タイトル</div>
+                    <div class="muted"
+                         th:text="${line.pressingSnapshot.artistName} + ' / ' + ${line.pressingSnapshot.catalogNumber}">
+                        アーティスト
+                    </div>
+                </td>
+                <td th:text="${line.pressingSnapshot.conditionType}">NEW</td>
+                <td th:text="${line.unitPrice}">JPY 4200</td>
+                <td th:text="${line.quantity}">1</td>
+                <td th:text="${line.lineTotal()}">JPY 4200</td>
+            </tr>
+            </tbody>
+        </table>
+        <p style="text-align:right; margin-top:0.8rem;">
+            合計: <strong th:text="${order.totalAmount()}">JPY 4200</strong>
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>出荷先(配送先)</h3>
+        <p>
+            <span th:text="${order.shippingAddress.recipientName}">お名前</span><br/>
+            〒<span th:text="${order.shippingAddress.postalCode}">100-0001</span><br/>
+            <span th:text="${order.shippingAddress.prefecture}">東京都</span>
+            <span th:text="${order.shippingAddress.city}">千代田区</span>
+            <span th:text="${order.shippingAddress.addressLine}">1-1</span><br/>
+            <span th:text="${order.shippingAddress.country}">JP</span>
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>請求先</h3>
+        <p>
+            <span th:text="${order.billingAddress.recipientName}">お名前</span><br/>
+            〒<span th:text="${order.billingAddress.postalCode}">100-0001</span><br/>
+            <span th:text="${order.billingAddress.prefecture}">東京都</span>
+            <span th:text="${order.billingAddress.city}">千代田区</span>
+            <span th:text="${order.billingAddress.addressLine}">1-1</span><br/>
+            <span th:text="${order.billingAddress.country}">JP</span>
+        </p>
+    </div>
+</main>
+</body>
+</html>

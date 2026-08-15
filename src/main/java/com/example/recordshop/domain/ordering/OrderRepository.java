@@ -16,4 +16,7 @@ public interface OrderRepository {
 
     /** 注文履歴画面用。新しい注文が先頭に来るようにする。 */
     List<Order> findByCustomerId(CustomerId customerId);
+
+    /** 管理画面の注文一覧用。新しい注文が先頭に来るようにする。 */
+    List<Order> findAll();
 }

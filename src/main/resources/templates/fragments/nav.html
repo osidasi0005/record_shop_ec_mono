@@ -9,6 +9,7 @@
         <span sec:authorize="isAuthenticated()">
             <a th:href="@{/orders}">注文履歴</a>
             <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/releases}">管理画面</a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/orders}">注文管理</a>
             <span sec:authentication="principal.displayName"></span>さん
             <form th:action="@{/logout}" method="post" style="display:inline">
                 <button type="submit" style="background:none;border:none;color:inherit;text-decoration:underline;cursor:pointer;padding:0;font:inherit;">ログアウト</button>
