@@ -64,7 +64,8 @@ https://d10qc58jhjv0fq.cloudfront.net
 - トップ/商品一覧: `https://d10qc58jhjv0fq.cloudfront.net/catalog`
 - ログイン: `https://d10qc58jhjv0fq.cloudfront.net/login`
 - 会員登録: `https://d10qc58jhjv0fq.cloudfront.net/register`
-- 管理画面: `https://d10qc58jhjv0fq.cloudfront.net/admin/releases`(要ADMINログイン)
+- 管理画面(作品一覧): `https://d10qc58jhjv0fq.cloudfront.net/admin/releases`(要ADMINログイン)
+- 管理画面(注文一覧): `https://d10qc58jhjv0fq.cloudfront.net/admin/orders`(要ADMINログイン)
 
 **注意**: これは学習・デモ用途の一時的な環境であり、コスト最小化のため使わない期間は
 削除する運用としている。削除後はそのURLが無効になるため、再デプロイ後は`cdk deploy`

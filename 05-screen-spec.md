@@ -9,6 +9,9 @@
 > ジャケット画像URL(`artworkUrl`)の登録・変更・表示機能は後から追加したため、既存の
 > スクリーンショットには反映されていない。該当箇所は本ドキュメント内で個別に注記する。
 
+> 管理画面: 注文一覧・注文詳細(#21, #22)のスクリーンショットのみ、ローカル環境
+> (`docker compose up`)から撮影したもの。それ以外は引き続きCloudFront URLから撮影している。
+
 ## URL一覧(早見表)
 
 | # | URL | メソッド | 画面 | 認証要否 |
@@ -33,6 +36,12 @@
 | 18 | `/admin/listings/{id}/publish` | POST | 出品を公開 | 要ROLE_ADMIN |
 | 19 | `/admin/releases/{id}/artwork` | POST | 作品全体のジャケット画像URLを設定・変更 | 要ROLE_ADMIN |
 | 20 | `/admin/releases/{id}/pressings/{pressingId}/artwork` | POST | プレス版ごとのジャケット画像URLを設定・変更 | 要ROLE_ADMIN |
+| 21 | `/admin/orders` | GET | 管理画面: 注文一覧 | 要ROLE_ADMIN |
+| 22 | `/admin/orders/{orderId}` | GET | 管理画面: 注文詳細 | 要ROLE_ADMIN |
+| 23 | `/admin/orders/{orderId}/mark-paid` | POST | 入金確認(PENDING→PAID) | 要ROLE_ADMIN |
+| 24 | `/admin/orders/{orderId}/mark-shipped` | POST | 発送済みにする(PAID→SHIPPED) | 要ROLE_ADMIN |
+| 25 | `/admin/orders/{orderId}/mark-delivered` | POST | 配達完了にする(SHIPPED→DELIVERED) | 要ROLE_ADMIN |
+| 26 | `/admin/orders/{orderId}/cancel` | POST | 注文をキャンセル(PENDING/PAID→CANCELLED) | 要ROLE_ADMIN |
 
 `/error`, `/css/**`, `/js/**`, `/webjars/**`, `/actuator/health` も`permitAll`だが、
 エンドユーザー向け画面ではないためここでは割愛する。
@@ -172,6 +181,32 @@ Releaseに紐づくPressingごとに、公開済みListing(コンディション
    折りたたみ表示)。再発盤ごとにジャケットデザインが異なるケースに対応する
 
 ![管理画面: 作品詳細](images/12-admin-release-detail.png)
+
+### 13. 管理画面: 注文一覧 `/admin/orders`
+
+全顧客の注文を、新しい注文が先頭に来るように一覧表示する(会員向けの`/orders`は
+ログイン中の会員自身の注文のみだが、こちらは全件対象)。注文日時・注文番号(先頭8桁)・
+出荷先の宛名・ステータス(PENDING/PAID/SHIPPED/DELIVERED/CANCELLED)・合計金額を表示する。
+
+![管理画面: 注文一覧](images/13-admin-orders-list.png)
+
+### 14. 管理画面: 注文詳細 `/admin/orders/{orderId}`
+
+明細(購入時点のPressing情報スナップショット)・出荷先(配送先)住所・請求先住所を表示する。
+入金確認や出荷先住所の確認を行った上で、現在のステータスから遷移可能な操作のみが
+ボタンとして表示される:
+
+| 操作 | 遷移 | 表示条件(現在のステータス) |
+|---|---|---|
+| 入金を確認する | PENDING → PAID | PENDING |
+| 発送済みにする | PAID → SHIPPED | PAID |
+| 配達完了にする | SHIPPED → DELIVERED | SHIPPED |
+| 注文をキャンセル | PENDING/PAID → CANCELLED | PENDING または PAID |
+
+不正な遷移(既に確定した状態機械の許可経路外)を試みた場合はエラーメッセージを表示して
+詳細画面に留まる。操作成功時は緑色のnoticeメッセージを表示する。
+
+![管理画面: 注文詳細](images/14-admin-order-detail.png)
 
 ## 権限マトリクス
 
