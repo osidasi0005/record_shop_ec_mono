@@ -61,8 +61,7 @@ export class RecordShopEcMybatisCdkStack extends cdk.Stack {
     const cluster = new ecs.Cluster(this, 'RecordShopMybatisCluster', { vpc });
 
     // 会員登録の確認コード・登録完了メールの送信元(SESで送信検証済みのメールアドレスである必要がある)。
-    // TODO: 実際に検証可能なメールアドレス/ドメインに置き換えること。
-    const mailFromAddress = 'no-reply@example.com';
+    const mailFromAddress = 'osidasi0005@gmail.com';
 
     // SESでメールアドレスIDを検証登録する(開発中は受信箱に届く確認メールをクリックする手動検証が必要)。
     // 独自ドメインを持つ場合は ses.Identity.domain('example.com') + Route53 DKIM自動設定が本番向きだが、
@@ -103,10 +102,14 @@ export class RecordShopEcMybatisCdkStack extends cdk.Stack {
       },
     });
 
-    // ECSタスクロールにSES送信権限を付与(最小権限: 検証済みIdentityのARNに限定)
+    // ECSタスクロールにSES送信権限を付与。
+    // SESサンドボックスモード中は送信元だけでなく宛先(To)のIdentityに対しても
+    // IAM側でses:SendEmailの権限チェックが行われるため、送信元Identityのみへの限定はできない。
+    // このAWSアカウント内のSES Identity全体(=このアカウント自身が検証したメールアドレス/ドメインのみ)
+    // への送信を許可する(本番アクセス取得後は宛先の検証・権限制約自体が不要になる)。
     service.taskDefinition.taskRole.addToPrincipalPolicy(new iam.PolicyStatement({
       actions: ['ses:SendEmail', 'ses:SendRawEmail'],
-      resources: [`arn:aws:ses:${this.region}:${this.account}:identity/${mailFromAddress}`],
+      resources: [`arn:aws:ses:${this.region}:${this.account}:identity/*`],
     }));
 
     service.targetGroup.configureHealthCheck({
