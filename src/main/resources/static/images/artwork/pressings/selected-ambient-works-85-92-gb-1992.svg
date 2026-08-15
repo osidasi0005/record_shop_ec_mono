@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- 独自生成のプレス版アートワーク(実物レーベルの複製ではない)。Release本体のhue=182/332を継承。2枚組(disc_count=2)を同心の2連リングで示唆。 -->
+  <rect width="400" height="400" fill="hsl(182,30%,10%)"/>
+  <circle cx="160" cy="176" r="90" fill="hsl(182,40%,6%)" stroke="hsl(332,50%,55%)" stroke-width="2"/>
+  <circle cx="160" cy="176" r="30" fill="hsl(332,50%,50%)"/>
+  <circle cx="240" cy="176" r="90" fill="hsl(182,40%,6%)" stroke="hsl(332,50%,55%)" stroke-width="2" opacity="0.85"/>
+  <circle cx="240" cy="176" r="30" fill="hsl(332,50%,50%)" opacity="0.85"/>
+  <text x="200" y="70" text-anchor="middle" font-family="Georgia, serif" font-size="13" font-weight="bold" fill="#fdfdfd">Apollo / R&amp;S</text>
+  <text x="200" y="88" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#f0f0f0">AMB 3922</text>
+  <rect x="0" y="330" width="400" height="70" fill="rgba(0,0,0,0.55)"/>
+  <text x="200" y="360" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="#fdfdfd">GB &#183; 1992</text>
+  <text x="200" y="382" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#dadada">Original Pressing (2LP)</text>
+</svg>

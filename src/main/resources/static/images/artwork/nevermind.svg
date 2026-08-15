@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!--
+    独自生成のジャケット風プレースホルダー画像(実物ジャケットの複製ではない)。
+    Title="Nevermind" -> hue=216, secondaryHue=6 / Artist="Nirvana" -> shapeCount=7
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="hsl(216,25%,30%)"/>
+      <stop offset="100%" stop-color="hsl(216,35%,10%)"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <circle cx="200" cy="150" r="90" fill="none" stroke="hsl(6,45%,55%)" stroke-width="2" opacity="0.4"/>
+  <circle cx="140" cy="110" r="14" fill="hsl(6,45%,55%)" opacity="0.6"/>
+  <circle cx="260" cy="120" r="10" fill="hsl(6,45%,55%)" opacity="0.55"/>
+  <polygon points="90,180 120,220 60,220" fill="hsl(6,40%,50%)" opacity="0.45"/>
+  <rect x="240" y="180" width="30" height="30" fill="hsl(6,45%,55%)" opacity="0.4" transform="rotate(8 255 195)"/>
+  <circle cx="330" cy="70" r="8" fill="hsl(6,45%,55%)" opacity="0.5"/>
+  <rect x="60" y="70" width="20" height="20" fill="hsl(6,45%,55%)" opacity="0.4" transform="rotate(-10 70 80)"/>
+  <rect x="0" y="266" width="400" height="134" fill="rgba(0,0,0,0.55)"/>
+  <text x="24" y="326" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="bold" fill="#fdfdfd">Nevermind</text>
+  <text x="24" y="358" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="#e6e6e6">Nirvana</text>
+</svg>

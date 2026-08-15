@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- 独自生成のプレス版アートワーク(実物レーベルの複製ではない)。CD再発盤なのでケース風の角丸矩形で表現。 -->
+  <rect width="400" height="400" fill="hsl(214,25%,20%)"/>
+  <rect x="90" y="56" width="220" height="220" rx="10" fill="hsl(214,40%,12%)" stroke="hsl(4,50%,55%)" stroke-width="2"/>
+  <circle cx="200" cy="166" r="70" fill="none" stroke="hsl(4,45%,55%)" stroke-width="1.5" opacity="0.6"/>
+  <circle cx="200" cy="166" r="46" fill="hsl(4,50%,52%)"/>
+  <circle cx="200" cy="166" r="6" fill="hsl(214,35%,12%)"/>
+  <text x="200" y="230" text-anchor="middle" font-family="Georgia, serif" font-size="13" font-weight="bold" fill="#fdfdfd">Blue Note</text>
+  <text x="200" y="248" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#f0f0f0">CDP 7243 8 32097 2 5</text>
+  <rect x="0" y="330" width="400" height="70" fill="rgba(0,0,0,0.55)"/>
+  <text x="200" y="360" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="#fdfdfd">US &#183; 1997</text>
+  <text x="200" y="382" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#dadada">CD Reissue</text>
+</svg>

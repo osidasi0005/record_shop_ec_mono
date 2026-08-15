@@ -25,9 +25,10 @@ services:
       DB_NAME: recordshop_mybatis
       DB_USERNAME: recordshop
       DB_PASSWORD: recordshop
-      # ローカル検証用の管理者アカウント(本番はSecrets Manager経由で別途設定)
+      # ローカル検証用の管理者アカウント(本番はSecrets Manager経由で別途設定)。
+      # SampleDataSeederが投入するサンプル顧客アカウントとパスワードを揃えている。
       ADMIN_EMAIL: admin@example.com
-      ADMIN_PASSWORD: admin12345
+      ADMIN_PASSWORD: Passw0rd!2024
     depends_on:
       postgres:
         condition: service_healthy
