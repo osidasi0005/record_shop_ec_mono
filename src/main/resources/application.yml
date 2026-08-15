@@ -42,3 +42,9 @@ app:
     # 未設定のままだと /admin/** に入れる会員が誰もいない状態になる。
     email: ${ADMIN_EMAIL:}
     password: ${ADMIN_PASSWORD:}
+  mail:
+    # 確認コード・登録完了メールの送信元(SESで送信検証済みのメールアドレスである必要がある)。
+    # SESサンドボックス中は宛先側も検証済みである必要がある。
+    from-address: ${MAIL_FROM_ADDRESS:no-reply@example.com}
+    aws:
+      region: ${AWS_SES_REGION:ap-northeast-1}

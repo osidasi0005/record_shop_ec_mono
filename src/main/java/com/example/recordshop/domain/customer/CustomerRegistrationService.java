@@ -22,11 +22,28 @@ public final class CustomerRegistrationService {
     }
 
     public Customer register(Email email, String rawPassword, String displayName, Instant now) {
+        assertEmailAvailable(email);
+        return persistNewCustomer(email, passwordHasher.hash(rawPassword), displayName, now);
+    }
+
+    /**
+     * 既にハッシュ化済みのパスワードで本登録を確定する。
+     * {@link EmailVerificationService} が確認コード照合後に呼び出す想定で、
+     * 平文パスワードを持ち回らないためにこちらのメソッドを分けている。
+     */
+    public Customer registerWithHashedPassword(Email email, String passwordHash, String displayName, Instant now) {
+        assertEmailAvailable(email);
+        return persistNewCustomer(email, passwordHash, displayName, now);
+    }
+
+    /** 指定のEmailが未使用であることを保証する。使用済みなら{@link InvariantViolationException}を投げる。 */
+    public void assertEmailAvailable(Email email) {
         if (customerRepository.existsByEmail(email)) {
             throw new InvariantViolationException("このメールアドレスは既に登録されています: " + email);
         }
+    }
 
-        String passwordHash = passwordHasher.hash(rawPassword);
+    private Customer persistNewCustomer(Email email, String passwordHash, String displayName, Instant now) {
         Customer customer = Customer.register(CustomerId.generate(), email, passwordHash, displayName, now);
         customerRepository.save(customer);
         return customer;

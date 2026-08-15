@@ -30,7 +30,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/catalog/**", "/register", "/login", "/error",
+                        .requestMatchers("/", "/catalog/**", "/register", "/register/confirm", "/login", "/error",
                                 "/css/**", "/js/**", "/images/**", "/webjars/**", "/actuator/health", "/api/**",
                                 "/robots.txt").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")

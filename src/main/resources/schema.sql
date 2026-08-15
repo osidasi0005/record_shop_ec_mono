@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS release_genres CASCADE;
 DROP TABLE IF EXISTS pressings CASCADE;
 DROP TABLE IF EXISTS releases CASCADE;
 DROP TABLE IF EXISTS customers CASCADE;
+DROP TABLE IF EXISTS email_verifications CASCADE;
 
 CREATE TABLE releases (
     id                    UUID PRIMARY KEY,
@@ -121,4 +122,17 @@ CREATE TABLE customers (
     display_name   VARCHAR(255) NOT NULL,
     role           VARCHAR(20)  NOT NULL,
     registered_at  TIMESTAMP    NOT NULL
+);
+
+-- 仮登録(会員登録の確認コード待ち)。confirmされて初めてcustomersへ本登録される。
+-- customersとは別集約・別テーブルであり、FK等の直接参照は持たない。
+-- emailにUNIQUE制約を付け、同一メールの仮登録は常に1件のみ(再登録時は上書き=upsert)。
+CREATE TABLE email_verifications (
+    id                 UUID         PRIMARY KEY,
+    email              VARCHAR(255) NOT NULL UNIQUE,
+    password_hash      VARCHAR(255) NOT NULL,
+    display_name       VARCHAR(255) NOT NULL,
+    verification_code  VARCHAR(6)   NOT NULL,
+    expires_at         TIMESTAMP    NOT NULL,
+    attempt_count      INTEGER      NOT NULL DEFAULT 0
 );

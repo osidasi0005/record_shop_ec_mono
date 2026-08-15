@@ -27,7 +27,21 @@
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mybatis-spring-boot.version>3.0.4</mybatis-spring-boot.version>
+        <aws-sdk.version>2.29.52</aws-sdk.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- AWS SDK for Java v2 のバージョンを一元管理する(SESクライアントで使用) -->
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws-sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- MyBatisの永続化スターター -->
@@ -89,6 +103,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- 会員登録確認コード・登録完了メールの送信(AWS SES) -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>ses</artifactId>
         </dependency>
     </dependencies>
 

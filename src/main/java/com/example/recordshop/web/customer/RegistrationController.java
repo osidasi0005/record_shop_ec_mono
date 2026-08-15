@@ -1,7 +1,7 @@
 package com.example.recordshop.web.customer;
 
-import com.example.recordshop.domain.customer.CustomerRegistrationService;
 import com.example.recordshop.domain.customer.Email;
+import com.example.recordshop.domain.customer.EmailVerificationService;
 import com.example.recordshop.domain.shared.InvariantViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,18 +9,21 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
-/** 会員登録画面(GET/POST /register)。 */
+/** 会員登録画面(GET/POST /register)。登録要求は確認コードの発行・送信のみ行い、
+ *  本登録は確認コード入力画面({@link EmailVerificationController})で確定する。 */
 @Controller
 public class RegistrationController {
 
     private static final int MIN_PASSWORD_LENGTH = 8;
 
-    private final CustomerRegistrationService customerRegistrationService;
+    private final EmailVerificationService emailVerificationService;
 
-    public RegistrationController(CustomerRegistrationService customerRegistrationService) {
-        this.customerRegistrationService = customerRegistrationService;
+    public RegistrationController(EmailVerificationService emailVerificationService) {
+        this.emailVerificationService = emailVerificationService;
     }
 
     @GetMapping("/register")
@@ -42,9 +45,10 @@ public class RegistrationController {
             return "register";
         }
 
+        Email email;
         try {
-            Email email = new Email(form.getEmail() == null ? "" : form.getEmail());
-            customerRegistrationService.register(email, form.getPassword(), form.getDisplayName(), Instant.now());
+            email = new Email(form.getEmail() == null ? "" : form.getEmail());
+            emailVerificationService.requestVerification(email, form.getPassword(), form.getDisplayName(), Instant.now());
         } catch (IllegalArgumentException e) {
             model.addAttribute("errorMessage", "メールアドレスの形式が正しくありません");
             return "register";
@@ -53,6 +57,6 @@ public class RegistrationController {
             return "register";
         }
 
-        return "redirect:/login?registered";
+        return "redirect:/register/confirm?email=" + URLEncoder.encode(email.value(), StandardCharsets.UTF_8);
     }
 }

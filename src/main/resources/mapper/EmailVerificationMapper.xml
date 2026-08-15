@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.recordshop.infrastructure.mybatis.EmailVerificationMapper">
+
+    <resultMap id="emailVerificationRowMap" type="com.example.recordshop.infrastructure.mybatis.EmailVerificationRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"/>
+            <arg column="email" javaType="string"/>
+            <arg column="password_hash" javaType="string"/>
+            <arg column="display_name" javaType="string"/>
+            <arg column="verification_code" javaType="string"/>
+            <arg column="expires_at" javaType="java.time.Instant"/>
+            <arg column="attempt_count" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.recordshop.infrastructure.mybatis.EmailVerificationRow">
+        INSERT INTO email_verifications
+            (id, email, password_hash, display_name, verification_code, expires_at, attempt_count)
+        VALUES
+            (#{id}, #{email}, #{passwordHash}, #{displayName}, #{verificationCode}, #{expiresAt}, #{attemptCount})
+    </insert>
+
+    <update id="updateByEmail" parameterType="com.example.recordshop.infrastructure.mybatis.EmailVerificationRow">
+        UPDATE email_verifications SET
+            id = #{id},
+            password_hash = #{passwordHash},
+            display_name = #{displayName},
+            verification_code = #{verificationCode},
+            expires_at = #{expiresAt},
+            attempt_count = #{attemptCount}
+        WHERE email = #{email}
+    </update>
+
+    <select id="selectByEmail" resultMap="emailVerificationRowMap">
+        SELECT id, email, password_hash, display_name, verification_code, expires_at, attempt_count
+        FROM email_verifications WHERE email = #{email}
+    </select>
+
+    <select id="countByEmail" resultType="_int">
+        SELECT COUNT(*) FROM email_verifications WHERE email = #{email}
+    </select>
+
+    <delete id="deleteByEmail">
+        DELETE FROM email_verifications WHERE email = #{email}
+    </delete>
+
+</mapper>

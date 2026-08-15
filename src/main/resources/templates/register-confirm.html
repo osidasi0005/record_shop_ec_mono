@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>確認コード入力 - Record Shop</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main>
+    <div class="card form-card">
+        <h1>確認コードの入力</h1>
+        <p class="muted">入力されたメールアドレス宛に確認コード(6桁の数字)を送信しました。10分以内に入力してください。</p>
+
+        <p class="error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
+        <form th:action="@{/register/confirm}" th:object="${confirmForm}" method="post">
+            <input type="hidden" th:field="*{email}"/>
+            <div class="field">
+                <label for="code">確認コード(6桁)</label>
+                <input type="text" id="code" th:field="*{code}" required pattern="[0-9]{6}" maxlength="6"
+                       inputmode="numeric" autofocus/>
+            </div>
+            <button type="submit">確認する</button>
+        </form>
+
+        <p class="muted" style="margin-top:1rem;">
+            コードが届かない・期限切れの場合は <a th:href="@{/register}">最初から会員登録をやり直す</a>
+        </p>
+    </div>
+</main>
+</body>
+</html>

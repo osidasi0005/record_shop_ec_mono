@@ -3,6 +3,9 @@ package com.example.recordshop.config;
 import com.example.recordshop.domain.catalog.ReleaseRepository;
 import com.example.recordshop.domain.customer.CustomerRegistrationService;
 import com.example.recordshop.domain.customer.CustomerRepository;
+import com.example.recordshop.domain.customer.EmailSender;
+import com.example.recordshop.domain.customer.EmailVerificationRepository;
+import com.example.recordshop.domain.customer.EmailVerificationService;
 import com.example.recordshop.domain.customer.PasswordHasher;
 import com.example.recordshop.domain.inventory.ListingRepository;
 import com.example.recordshop.domain.ordering.OrderPlacementService;
@@ -39,5 +42,13 @@ public class DomainServiceConfig {
     public CustomerRegistrationService customerRegistrationService(CustomerRepository customerRepository,
                                                                      PasswordHasher passwordHasher) {
         return new CustomerRegistrationService(customerRepository, passwordHasher);
+    }
+
+    @Bean
+    public EmailVerificationService emailVerificationService(EmailVerificationRepository emailVerificationRepository,
+                                                               CustomerRegistrationService customerRegistrationService,
+                                                               PasswordHasher passwordHasher, EmailSender emailSender) {
+        return new EmailVerificationService(emailVerificationRepository, customerRegistrationService,
+                passwordHasher, emailSender);
     }
 }
