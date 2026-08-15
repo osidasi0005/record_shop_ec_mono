@@ -7,6 +7,8 @@ import * as rds from 'aws-cdk-lib/aws-rds';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as ses from 'aws-cdk-lib/aws-ses';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as path from 'path';
 
 /**
@@ -58,6 +60,17 @@ export class RecordShopEcMybatisCdkStack extends cdk.Stack {
 
     const cluster = new ecs.Cluster(this, 'RecordShopMybatisCluster', { vpc });
 
+    // 会員登録の確認コード・登録完了メールの送信元(SESで送信検証済みのメールアドレスである必要がある)。
+    // TODO: 実際に検証可能なメールアドレス/ドメインに置き換えること。
+    const mailFromAddress = 'no-reply@example.com';
+
+    // SESでメールアドレスIDを検証登録する(開発中は受信箱に届く確認メールをクリックする手動検証が必要)。
+    // 独自ドメインを持つ場合は ses.Identity.domain('example.com') + Route53 DKIM自動設定が本番向きだが、
+    // このスタックにはRoute53ホストゾーンが無いため、初期実装はメールアドレス単位の検証を採用する。
+    const sesIdentity = new ses.EmailIdentity(this, 'RecordShopMybatisSesIdentity', {
+      identity: ses.Identity.email(mailFromAddress),
+    });
+
     // record-shop-ec-mybatis の Dockerfile からイメージをビルドし、ECRへ自動プッシュする。
     const service = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'RecordShopMybatisService', {
       cluster,
@@ -79,6 +92,8 @@ export class RecordShopEcMybatisCdkStack extends cdk.Stack {
           DB_PORT: database.instanceEndpoint.port.toString(),
           DB_NAME: 'recordshop_mybatis',
           ADMIN_EMAIL: 'admin@example.com',
+          MAIL_FROM_ADDRESS: mailFromAddress,
+          AWS_SES_REGION: this.region,
         },
         secrets: {
           DB_USERNAME: ecs.Secret.fromSecretsManager(database.secret!, 'username'),
@@ -87,6 +102,12 @@ export class RecordShopEcMybatisCdkStack extends cdk.Stack {
         },
       },
     });
+
+    // ECSタスクロールにSES送信権限を付与(最小権限: 検証済みIdentityのARNに限定)
+    service.taskDefinition.taskRole.addToPrincipalPolicy(new iam.PolicyStatement({
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: [`arn:aws:ses:${this.region}:${this.account}:identity/${mailFromAddress}`],
+    }));
 
     service.targetGroup.configureHealthCheck({
       path: '/actuator/health',
