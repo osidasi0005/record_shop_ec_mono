@@ -1,9 +1,11 @@
 package com.example.recordshop.infrastructure.mail;
 
 import com.example.recordshop.domain.customer.Email;
+import com.example.recordshop.domain.customer.EmailDeliveryException;
 import com.example.recordshop.domain.customer.EmailSender;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.Body;
 import software.amazon.awssdk.services.ses.model.Content;
@@ -41,7 +43,17 @@ public class SesEmailSender implements EmailSender {
     }
 
     private void send(Email to, String subject, String bodyText) {
-        SendEmailRequest request = SendEmailRequest.builder()
+        try {
+            sesClient.sendEmail(buildRequest(to, subject, bodyText));
+        } catch (SdkException e) {
+            // SESサンドボックス中の未検証宛先・認証情報不備・ネットワーク障害などをまとめて
+            // ドメイン例外に包み直す。呼び出し元(Web層)が利用者向けの案内に変換できるようにする。
+            throw new EmailDeliveryException("メールの送信に失敗しました: " + to.value(), e);
+        }
+    }
+
+    private SendEmailRequest buildRequest(Email to, String subject, String bodyText) {
+        return SendEmailRequest.builder()
                 .source(fromAddress)
                 .destination(Destination.builder().toAddresses(to.value()).build())
                 .message(Message.builder()
@@ -51,6 +63,5 @@ public class SesEmailSender implements EmailSender {
                                 .build())
                         .build())
                 .build();
-        sesClient.sendEmail(request);
     }
 }

@@ -32,8 +32,13 @@ public class EmailVerificationController {
         return "register-confirm";
     }
 
+    /**
+     * バインド名は {@code confirmForm} を明示する。既定名({@code emailVerificationForm})のままだと、
+     * エラー時に {@code register-confirm.html} の {@code th:object="${confirmForm}"} が解決できず、
+     * 画面がテンプレート例外(500)になってしまう。
+     */
     @PostMapping("/register/confirm")
-    public String confirm(@ModelAttribute EmailVerificationForm form, Model model) {
+    public String confirm(@ModelAttribute("confirmForm") EmailVerificationForm form, Model model) {
         try {
             Email email = new Email(form.getEmail() == null ? "" : form.getEmail());
             emailVerificationService.confirmRegistration(email, form.getCode(), Instant.now());

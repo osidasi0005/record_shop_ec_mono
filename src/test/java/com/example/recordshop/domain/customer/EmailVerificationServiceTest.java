@@ -48,6 +48,19 @@ class EmailVerificationServiceTest {
         }
     }
 
+    /** 送信が必ず失敗するフェイク実装(SESサンドボックスの未検証宛先などを模す)。 */
+    private static final EmailSender FAILING_SENDER = new EmailSender() {
+        @Override
+        public void sendVerificationCode(Email to, String displayName, String verificationCode) {
+            throw new EmailDeliveryException("メールの送信に失敗しました: " + to.value(), new RuntimeException("rejected"));
+        }
+
+        @Override
+        public void sendRegistrationCompleted(Email to, String displayName) {
+            throw new EmailDeliveryException("メールの送信に失敗しました: " + to.value(), new RuntimeException("rejected"));
+        }
+    };
+
     private final InMemoryCustomerRepository customerRepository = new InMemoryCustomerRepository();
     private final InMemoryEmailVerificationRepository emailVerificationRepository =
             new InMemoryEmailVerificationRepository();
@@ -120,5 +133,34 @@ class EmailVerificationServiceTest {
     void confirmRegistration_仮登録が存在しない場合は例外を投げる() {
         assertThrows(InvariantViolationException.class,
                 () -> service.confirmRegistration(new Email("nobody@example.com"), "123456", Instant.now()));
+    }
+
+    @Test
+    void requestVerification_確認コードメールの送信に失敗したら仮登録を残さない() {
+        // 保存してから送信すると、利用者はコードを受け取れないのに仮登録だけ残ってしまう。
+        EmailVerificationService failing = new EmailVerificationService(
+                emailVerificationRepository, customerRegistrationService, FAKE_HASHER, FAILING_SENDER);
+
+        assertThrows(EmailDeliveryException.class, () -> failing.requestVerification(
+                new Email("taro@example.com"), "s3cret", "山田太郎", Instant.now()));
+
+        assertTrue(emailVerificationRepository.findByEmail(new Email("taro@example.com")).isEmpty());
+    }
+
+    @Test
+    void confirmRegistration_登録完了メールの送信に失敗しても本登録は成功する() {
+        Instant now = Instant.now();
+        service.requestVerification(new Email("taro@example.com"), "s3cret", "山田太郎", now);
+        String code = emailVerificationRepository.findByEmail(new Email("taro@example.com"))
+                .orElseThrow().verificationCode();
+
+        // 完了メールは「お知らせ」であり、本登録が済んだ事実には影響しない
+        EmailVerificationService completionMailFails = new EmailVerificationService(
+                emailVerificationRepository, customerRegistrationService, FAKE_HASHER, FAILING_SENDER);
+        Customer customer = completionMailFails.confirmRegistration(new Email("taro@example.com"), code, now);
+
+        assertEquals("山田太郎", customer.displayName());
+        assertTrue(customerRepository.findByEmail(new Email("taro@example.com")).isPresent());
+        assertTrue(emailVerificationRepository.findByEmail(new Email("taro@example.com")).isEmpty());
     }
 }

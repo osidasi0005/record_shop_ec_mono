@@ -1,6 +1,7 @@
 package com.example.recordshop.web.customer;
 
 import com.example.recordshop.domain.customer.Email;
+import com.example.recordshop.domain.customer.EmailDeliveryException;
 import com.example.recordshop.domain.customer.EmailVerificationService;
 import com.example.recordshop.domain.shared.InvariantViolationException;
 import org.springframework.stereotype.Controller;
@@ -54,6 +55,10 @@ public class RegistrationController {
             return "register";
         } catch (InvariantViolationException e) {
             model.addAttribute("errorMessage", e.getMessage());
+            return "register";
+        } catch (EmailDeliveryException e) {
+            model.addAttribute("errorMessage",
+                    "確認コードのメールを送信できませんでした。メールアドレスをご確認のうえ、もう一度お試しください");
             return "register";
         }
 

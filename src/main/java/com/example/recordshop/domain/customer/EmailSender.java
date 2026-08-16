@@ -8,9 +8,17 @@ package com.example.recordshop.domain.customer;
  */
 public interface EmailSender {
 
-    /** 確認コード(6桁の数字)を送信する。 */
+    /**
+     * 確認コード(6桁の数字)を送信する。
+     *
+     * @throws EmailDeliveryException 送信に失敗した場合
+     */
     void sendVerificationCode(Email to, String displayName, String verificationCode);
 
-    /** 会員登録完了を通知するメールを送信する。 */
+    /**
+     * 会員登録完了を通知するメールを送信する。
+     *
+     * @throws EmailDeliveryException 送信に失敗した場合
+     */
     void sendRegistrationCompleted(Email to, String displayName);
 }
