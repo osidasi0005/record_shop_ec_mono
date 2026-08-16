@@ -10,6 +10,8 @@
 <main>
     <h1>商品一覧</h1>
 
+    <p class="error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
     <p class="muted" th:if="${#lists.isEmpty(releases)}">まだ商品が登録されていません。</p>
 
     <div class="release-list">

@@ -36,9 +36,19 @@ public class CatalogPageController {
 
     @GetMapping("/catalog")
     public String list(Model model) {
-        List<Release> releases = releaseRepository.findAll();
+        // 購入可能な(PUBLISHEDの)Listingを1件も持たないReleaseは一覧に出さない。
+        // 詳細画面(#detail)と同じ絞り込みをかけないと、DRAFTのまま公開していない作品まで並んでしまう。
+        List<Release> releases = releaseRepository.findAll().stream()
+                .filter(this::hasPublishedListing)
+                .toList();
         model.addAttribute("releases", releases);
         return "catalog/list";
+    }
+
+    private boolean hasPublishedListing(Release release) {
+        return release.pressings().stream()
+                .flatMap(pressing -> listingRepository.findByPressingId(pressing.pressingId()).stream())
+                .anyMatch(listing -> listing.status() == ListingStatus.PUBLISHED);
     }
 
     @GetMapping("/catalog/{releaseId}")
