@@ -21,6 +21,29 @@
     </div>
 
     <div class="card">
+        <h3>お支払い状況</h3>
+        <p class="muted" th:if="${#lists.isEmpty(payments)}">この注文の決済はまだ行われていません。</p>
+        <table class="simple" th:if="${!#lists.isEmpty(payments)}">
+            <thead>
+            <tr>
+                <th>決済状態</th>
+                <th>支払方法</th>
+                <th>金額</th>
+                <th>決済日時</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="payment : ${payments}">
+                <td><span class="status-badge" th:text="${payment.status}">CAPTURED</span></td>
+                <td th:text="${payment.method}">CREDIT_CARD</td>
+                <td th:text="${payment.amount}">JPY 4200</td>
+                <td th:text="${payment.capturedAt.orElse(null)} ?: '-'">2026-01-01T12:00:00Z</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
         <h3>ご注文明細</h3>
         <table class="simple">
             <thead>

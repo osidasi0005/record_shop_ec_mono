@@ -3,6 +3,7 @@ package com.example.recordshop.web.ordering;
 import com.example.recordshop.domain.ordering.Order;
 import com.example.recordshop.domain.ordering.OrderId;
 import com.example.recordshop.domain.ordering.OrderRepository;
+import com.example.recordshop.domain.payment.PaymentRepository;
 import com.example.recordshop.infrastructure.security.CustomerUserDetails;
 import com.example.recordshop.web.PathIds;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,9 +21,11 @@ import org.springframework.http.HttpStatus;
 public class OrderHistoryController {
 
     private final OrderRepository orderRepository;
+    private final PaymentRepository paymentRepository;
 
-    public OrderHistoryController(OrderRepository orderRepository) {
+    public OrderHistoryController(OrderRepository orderRepository, PaymentRepository paymentRepository) {
         this.orderRepository = orderRepository;
+        this.paymentRepository = paymentRepository;
     }
 
     @GetMapping("/orders")
@@ -43,6 +46,9 @@ public class OrderHistoryController {
         }
 
         model.addAttribute("order", order);
+        // 決済状況は Payment 集約が持っており、Order からはたどれない(コンテキスト間はID参照のみ)。
+        // 画面表示のためにここで引き直す。
+        model.addAttribute("payments", paymentRepository.findByOrderId(order.orderId()));
         return "orders/detail";
     }
 }
