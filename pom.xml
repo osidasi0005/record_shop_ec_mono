@@ -105,6 +105,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- 画面(Thymeleaf)のレンダリングをMockMvcで検証する際に、ログイン済みユーザー・CSRFトークンを差し込む -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- 会員登録確認コード・登録完了メールの送信(AWS SES) -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>

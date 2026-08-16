@@ -42,7 +42,11 @@ DDD学習用のレコード販売ECサイト。ドメイン層(Catalog/Inventory
 ./mvnw test
 ```
 
-Dockerが無くてもH2(PostgreSQL互換モード)でテストが通る。全48テスト。
+Dockerが無くてもH2(PostgreSQL互換モード)でテストが通る。全90テスト。
+
+ドメイン層の単体テスト・MyBatisの結合テストに加えて、`PageRenderingTest` でThymeleaf画面を
+実際にレンダリングして検証している(エラー時のモデル属性不足による500など、
+ドメイン層のテストでは検出できない不具合の再発防止)。
 
 ## ローカル起動
 
