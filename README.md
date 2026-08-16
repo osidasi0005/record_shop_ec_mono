@@ -14,6 +14,13 @@
 
 - [system-test-spec.md](system-test-spec.md) — システムテスト仕様書
 
+## テスト実施記録
+
+| 実施日 | 環境 | 対象コミット | 結果 |
+|---|---|---|---|
+| [2026-08-16](test-results/2026-08-16-aws.md) | AWS | mybatis `a226476` | Pass 50 / 条件付き 5 / Fail 11 / Blocked 2 |
+| [2026-08-16(修正版で再実施)](test-results/2026-08-16-aws-retest.md) | AWS | mybatis `701dd9d` | Pass 62 / 条件付き 5 / Fail 0 / Blocked 1 |
+
 ## テスト実行環境の前提
 
 以下いずれかの環境でテストを実施できる。
