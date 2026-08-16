@@ -4,8 +4,15 @@
 (AWS CDK、TypeScript)からなるレコード販売ECサイトの仕様書一式。
 
 会員登録・商品閲覧・カート・チェックアウト・決済・注文履歴・出品者向け管理画面まで揃った
-ECサイトとして、AWS上にCloudFront経由のHTTPSで公開されている(DDD学習用のポートフォリオ
+ECサイトで、AWS上にCloudFront経由のHTTPSで公開できる構成になっている(DDD学習用のポートフォリオ
 プロジェクト)。
+
+**現在AWS環境は停止中**(2026-08-16にコスト都合で削除、[07-aws-teardown-record.md](07-aws-teardown-record.md))。
+動かして確認したい場合はローカルで起動する。
+
+```bash
+cd record-shop-ec-mybatis && docker compose up -d --build   # http://localhost:8081
+```
 
 ## 目次
 
@@ -15,6 +22,7 @@ ECサイトとして、AWS上にCloudFront経由のHTTPSで公開されている
 4. [インフラ構成図](04-infrastructure-diagram.md) ― AWS構成とCloudFront〜Fargate間のHTTPS対応の仕組み
 5. [画面仕様書](05-screen-spec.md) ― 全画面のURL・入力項目・権限・実際のスクリーンショット
 6. [ログインURL一覧](06-login-urls.md) ― 顧客向け・管理者向けのログイン方法
+7. [AWS環境の撤収記録](07-aws-teardown-record.md) ― コスト都合での停止にあたっての状態記録・バックアップ・復元手順
 
 ## 関連リポジトリ
 

@@ -53,27 +53,40 @@
   平文をコード・ドキュメント上には置かない方針のため、必要なつどAWSコンソール
   またはCLI(`aws secretsmanager get-secret-value`)で取得する |
 
-## デモ環境の例(AWS)
+## アクセス先の一覧
 
-`record-shop-ec-cdk`の`RecordShopEcMybatisCdkStack`が稼働中。
+`{ベースURL}`は環境によって変わる。現在アクセスできるのは**ローカル環境のみ**。
 
-```
-https://d10qc58jhjv0fq.cloudfront.net
-```
+| 環境 | ベースURL | 状態 |
+|---|---|---|
+| ローカル(Docker Compose) | `http://localhost:8081` | `docker compose up -d --build`で起動 |
+| AWS(`RecordShopEcMybatisCdkStack`) | デプロイのたびに変わる | **2026-08-16に削除済み(停止中)** |
 
-- トップ/商品一覧: `https://d10qc58jhjv0fq.cloudfront.net/catalog`
-- ログイン: `https://d10qc58jhjv0fq.cloudfront.net/login`
-- 会員登録: `https://d10qc58jhjv0fq.cloudfront.net/register`
-- 管理画面(作品一覧): `https://d10qc58jhjv0fq.cloudfront.net/admin/releases`(要ADMINログイン)
-- 管理画面(注文一覧): `https://d10qc58jhjv0fq.cloudfront.net/admin/orders`(要ADMINログイン)
+| 画面 | パス | 権限 |
+|---|---|---|
+| トップ/商品一覧 | `/catalog` | 誰でも |
+| ログイン | `/login` | 誰でも |
+| 会員登録 | `/register` | 誰でも |
+| 管理画面(作品一覧) | `/admin/releases` | 要ADMIN |
+| 管理画面(注文一覧) | `/admin/orders` | 要ADMIN |
 
-**注意**: これは学習・デモ用途の一時的な環境であり、コスト最小化のため使わない期間は
-削除する運用としている。削除後はそのURLが無効になるため、再デプロイ後は`cdk deploy`
-の出力(`ServiceUrl`)から都度最新のURLを確認すること(CloudFrontのドメイン名はデプロイの
-たびに変わりうる)。
+### AWS環境について
+
+コスト最小化のため、使わない期間は削除する運用としている。2026-08-16にコスト都合で削除した
+(経緯・DBのバックアップ・復元手順は[07-aws-teardown-record.md](07-aws-teardown-record.md)を参照)。
+かつて使っていた`https://d10qc58jhjv0fq.cloudfront.net`は**現在無効**。
+
+CloudFrontのドメイン名はデプロイのたびに変わるため、再デプロイ後は`cdk deploy`の出力
+(`ServiceUrl`)から都度最新のURLを確認すること。
 
 ```bash
 cd record-shop-ec-cdk
 npx cdk deploy RecordShopEcMybatisCdkStack   # (再)デプロイ
 npx cdk destroy RecordShopEcMybatisCdkStack  # 削除
 ```
+
+### ローカル環境の制約
+
+`/register`の会員登録は、確認コードのメール送信にAWS SESを使う実装のため**ローカルでは完了できない**
+(Docker ComposeがAWS認証情報を渡しておらず、送信元アドレスの検証もスタック削除で解除されている)。
+ローカルで動作を試す場合は、上記のサンプル顧客アカウントでログインすること。

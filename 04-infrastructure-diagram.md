@@ -113,4 +113,6 @@ cd record-shop-ec-cdk
 npx cdk destroy RecordShopEcMybatisCdkStack
 ```
 
-で削除する運用としている。
+で削除する運用としている。この方針に従い、**2026-08-16に削除済み**
+(記録・復元手順は[07-aws-teardown-record.md](07-aws-teardown-record.md))。
+本ドキュメントの構成図は、再デプロイすれば同じものが再現される設計の記述である。
