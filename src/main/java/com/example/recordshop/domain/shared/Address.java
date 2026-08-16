@@ -23,7 +23,7 @@ public record Address(
         requireNonBlank(prefecture, "prefecture");
         requireNonBlank(city, "city");
         requireNonBlank(addressLine, "addressLine");
-        requireNonBlank(country, "country");
+        CountryCodes.requireValid(country, "country");
     }
 
     private static void requireNonBlank(String value, String field) {

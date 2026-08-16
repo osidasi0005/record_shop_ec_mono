@@ -10,6 +10,8 @@
 <main>
     <h1>ご購入手続き</h1>
 
+    <p class="error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
     <div class="card">
         <h3>ご注文内容</h3>
         <table class="simple">

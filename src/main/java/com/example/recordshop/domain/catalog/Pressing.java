@@ -1,5 +1,7 @@
 package com.example.recordshop.domain.catalog;
 
+import com.example.recordshop.domain.shared.CountryCodes;
+
 import java.util.Objects;
 
 /**
@@ -38,7 +40,7 @@ public final class Pressing {
         this.pressingId = Objects.requireNonNull(pressingId, "pressingId must not be null");
         this.labelName = requireNonBlank(labelName, "labelName");
         this.catalogNumber = requireNonBlank(catalogNumber, "catalogNumber");
-        this.country = requireNonBlank(country, "country");
+        this.country = CountryCodes.requireValid(country, "country");
         this.pressYear = requirePlausibleYear(pressYear);
         this.matrixRunout = matrixRunout;
         this.reissue = reissue;

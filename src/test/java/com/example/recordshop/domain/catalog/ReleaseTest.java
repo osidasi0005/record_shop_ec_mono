@@ -33,6 +33,16 @@ class ReleaseTest {
     }
 
     @Test
+    void addPressing_製造国が2文字の国コードでないものは拒否される() {
+        // pressings.country は VARCHAR(2)。ドメインで弾かないとINSERT時の500になる。
+        Release release = kindOfBlue();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> release.addPressing("Test Label", "TL-001", "Japan", 1990, null, false, lpFormat(), null));
+        assertTrue(release.pressings().isEmpty());
+    }
+
+    @Test
     void addPressing_品番と製造国と製造年が同じPressingは拒否される() {
         Release release = kindOfBlue();
         release.addPressing("Columbia", "CL 1355", "US", 1959, "XSM-A", false, lpFormat(), null);

@@ -77,8 +77,15 @@ public class CheckoutController {
             return "redirect:/cart";
         }
 
-        Address address = new Address(form.getRecipientName(), form.getPostalCode(), form.getPrefecture(),
-                form.getCity(), form.getAddressLine(), form.getCountry());
+        Address address;
+        try {
+            address = new Address(form.getRecipientName(), form.getPostalCode(), form.getPrefecture(),
+                    form.getCity(), form.getAddressLine(), form.getCountry());
+        } catch (IllegalArgumentException e) {
+            // 国コードの桁数など、住所の値オブジェクトが弾いた入力エラー
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/checkout";
+        }
 
         try {
             Order order = checkoutService.checkout(cart, address, address);
