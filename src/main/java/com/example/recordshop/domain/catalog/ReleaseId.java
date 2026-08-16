@@ -1,5 +1,7 @@
 package com.example.recordshop.domain.catalog;
 
+import com.example.recordshop.domain.shared.Identifiers;
+
 import java.util.Objects;
 import java.util.UUID;
 
@@ -17,7 +19,7 @@ public record ReleaseId(UUID value) {
     }
 
     public static ReleaseId of(String uuid) {
-        return new ReleaseId(UUID.fromString(uuid));
+        return new ReleaseId(Identifiers.parse(uuid, "ReleaseId"));
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.example.recordshop.domain.catalog;
 
+import com.example.recordshop.domain.shared.Identifiers;
+
 import java.util.Objects;
 import java.util.UUID;
 
@@ -19,7 +21,7 @@ public record PressingId(UUID value) {
     }
 
     public static PressingId of(String uuid) {
-        return new PressingId(UUID.fromString(uuid));
+        return new PressingId(Identifiers.parse(uuid, "PressingId"));
     }
 
     @Override

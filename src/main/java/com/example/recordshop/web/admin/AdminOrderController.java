@@ -4,6 +4,7 @@ import com.example.recordshop.domain.ordering.Order;
 import com.example.recordshop.domain.ordering.OrderId;
 import com.example.recordshop.domain.ordering.OrderRepository;
 import com.example.recordshop.domain.shared.IllegalStateTransitionException;
+import com.example.recordshop.web.PathIds;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -78,7 +79,7 @@ public class AdminOrderController {
     }
 
     private Order findOrThrow(String orderId) {
-        return orderRepository.findById(OrderId.of(orderId))
+        return orderRepository.findById(PathIds.parse(orderId, OrderId::of, "Order"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found: " + orderId));
     }
 }

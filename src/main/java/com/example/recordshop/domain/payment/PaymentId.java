@@ -1,5 +1,7 @@
 package com.example.recordshop.domain.payment;
 
+import com.example.recordshop.domain.shared.Identifiers;
+
 import java.util.Objects;
 import java.util.UUID;
 
@@ -17,7 +19,7 @@ public record PaymentId(UUID value) {
     }
 
     public static PaymentId of(String uuid) {
-        return new PaymentId(UUID.fromString(uuid));
+        return new PaymentId(Identifiers.parse(uuid, "PaymentId"));
     }
 
     @Override

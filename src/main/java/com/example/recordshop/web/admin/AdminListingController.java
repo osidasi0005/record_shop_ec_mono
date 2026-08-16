@@ -7,7 +7,9 @@ import com.example.recordshop.domain.inventory.ConditionType;
 import com.example.recordshop.domain.inventory.Listing;
 import com.example.recordshop.domain.inventory.ListingId;
 import com.example.recordshop.domain.inventory.ListingRepository;
+import com.example.recordshop.domain.shared.InvariantViolationException;
 import com.example.recordshop.domain.shared.Money;
+import com.example.recordshop.web.PathIds;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -36,7 +38,7 @@ public class AdminListingController {
 
     @PostMapping("/admin/listings")
     public String create(@ModelAttribute ListingForm form, RedirectAttributes redirectAttributes) {
-        PressingId pressingId = PressingId.of(form.getPressingId());
+        PressingId pressingId = PathIds.parse(form.getPressingId(), PressingId::of, "Pressing");
         Release release = releaseRepository.findByPressingId(pressingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Pressing not found: " + form.getPressingId()));
@@ -54,7 +56,9 @@ public class AdminListingController {
                 listing = Listing.newCopy(ListingId.generate(), pressingId, price, initialStock);
             }
             listingRepository.save(listing);
-        } catch (IllegalArgumentException | NullPointerException e) {
+        } catch (InvariantViolationException | IllegalArgumentException | NullPointerException e) {
+            // InvariantViolationException(在庫数0での出品など)を捕まえないと、画面リクエストにも
+            // ApiExceptionHandler経由でJSONが返ってしまう。
             redirectAttributes.addFlashAttribute("errorMessage", "出品の登録に失敗しました: " + e.getMessage());
         }
 
@@ -63,7 +67,7 @@ public class AdminListingController {
 
     @PostMapping("/admin/listings/{listingId}/publish")
     public String publish(@PathVariable String listingId, RedirectAttributes redirectAttributes) {
-        Listing listing = listingRepository.findById(ListingId.of(listingId))
+        Listing listing = listingRepository.findById(PathIds.parse(listingId, ListingId::of, "Listing"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found: " + listingId));
 
         try {

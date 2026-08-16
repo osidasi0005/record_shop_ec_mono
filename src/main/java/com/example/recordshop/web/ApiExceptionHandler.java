@@ -2,6 +2,7 @@ package com.example.recordshop.web;
 
 import com.example.recordshop.domain.shared.IllegalStateTransitionException;
 import com.example.recordshop.domain.shared.InvariantViolationException;
+import com.example.recordshop.domain.shared.MalformedIdentifierException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    /**
+     * ID文字列がUUIDとして解釈できない → 404 Not Found。
+     *
+     * <p>「存在しないIDを指定した」ことに変わりはなく、IDの採番方式(UUIDであること)は
+     * クライアントに対する契約ではないため、形式不正と未存在を区別せず 404 に揃える。
+     * {@link IllegalArgumentException} を継承しているが、より具体的なこのハンドラが優先される。
+     */
+    @ExceptionHandler(MalformedIdentifierException.class)
+    public ResponseEntity<ErrorResponse> handleMalformedIdentifier(MalformedIdentifierException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(e.getMessage()));
+    }
 
     /** 不変条件違反・不正な引数 → 400 Bad Request */
     @ExceptionHandler({InvariantViolationException.class, IllegalArgumentException.class})

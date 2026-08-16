@@ -9,6 +9,7 @@ import com.example.recordshop.domain.catalog.ReleaseRepository;
 import com.example.recordshop.domain.inventory.Listing;
 import com.example.recordshop.domain.inventory.ListingRepository;
 import com.example.recordshop.domain.shared.InvariantViolationException;
+import com.example.recordshop.web.PathIds;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -81,7 +82,7 @@ public class AdminReleaseController {
 
     @GetMapping("/{releaseId}")
     public String detail(@PathVariable String releaseId, Model model) {
-        Release release = releaseRepository.findById(ReleaseId.of(releaseId))
+        Release release = releaseRepository.findById(PathIds.parse(releaseId, ReleaseId::of, "Release"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Release not found: " + releaseId));
 
         // 管理画面では公開状況を問わず全Listingを見せる(顧客向けcatalog画面はPUBLISHEDのみ)
@@ -110,7 +111,7 @@ public class AdminReleaseController {
     @PostMapping("/{releaseId}/artwork")
     public String changeArtwork(@PathVariable String releaseId, @ModelAttribute ArtworkForm form,
                                  RedirectAttributes redirectAttributes) {
-        Release release = releaseRepository.findById(ReleaseId.of(releaseId))
+        Release release = releaseRepository.findById(PathIds.parse(releaseId, ReleaseId::of, "Release"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Release not found: " + releaseId));
 
         release.changeArtworkUrl(form.getArtworkUrl());
@@ -124,11 +125,11 @@ public class AdminReleaseController {
     @PostMapping("/{releaseId}/pressings/{pressingId}/artwork")
     public String changePressingArtwork(@PathVariable String releaseId, @PathVariable String pressingId,
                                          @ModelAttribute ArtworkForm form, RedirectAttributes redirectAttributes) {
-        Release release = releaseRepository.findById(ReleaseId.of(releaseId))
+        Release release = releaseRepository.findById(PathIds.parse(releaseId, ReleaseId::of, "Release"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Release not found: " + releaseId));
 
         try {
-            release.changePressingArtworkUrl(PressingId.of(pressingId), form.getArtworkUrl());
+            release.changePressingArtworkUrl(PathIds.parse(pressingId, PressingId::of, "Pressing"), form.getArtworkUrl());
             releaseRepository.save(release);
             redirectAttributes.addFlashAttribute("notice", "アートワークを更新しました");
         } catch (IllegalArgumentException e) {
@@ -141,7 +142,7 @@ public class AdminReleaseController {
     @PostMapping("/{releaseId}/pressings")
     public String addPressing(@PathVariable String releaseId, @ModelAttribute PressingForm form,
                                RedirectAttributes redirectAttributes) {
-        Release release = releaseRepository.findById(ReleaseId.of(releaseId))
+        Release release = releaseRepository.findById(PathIds.parse(releaseId, ReleaseId::of, "Release"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Release not found: " + releaseId));
 
         try {

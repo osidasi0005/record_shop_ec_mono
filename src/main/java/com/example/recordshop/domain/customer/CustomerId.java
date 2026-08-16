@@ -1,5 +1,7 @@
 package com.example.recordshop.domain.customer;
 
+import com.example.recordshop.domain.shared.Identifiers;
+
 import java.util.Objects;
 import java.util.UUID;
 
@@ -21,7 +23,7 @@ public record CustomerId(UUID value) {
     }
 
     public static CustomerId of(String uuid) {
-        return new CustomerId(UUID.fromString(uuid));
+        return new CustomerId(Identifiers.parse(uuid, "CustomerId"));
     }
 
     @Override

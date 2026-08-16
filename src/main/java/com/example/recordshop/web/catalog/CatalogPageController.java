@@ -7,6 +7,7 @@ import com.example.recordshop.domain.catalog.ReleaseRepository;
 import com.example.recordshop.domain.inventory.Listing;
 import com.example.recordshop.domain.inventory.ListingRepository;
 import com.example.recordshop.domain.inventory.ListingStatus;
+import com.example.recordshop.web.PathIds;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +43,7 @@ public class CatalogPageController {
 
     @GetMapping("/catalog/{releaseId}")
     public String detail(@PathVariable String releaseId, Model model) {
-        Release release = releaseRepository.findById(ReleaseId.of(releaseId))
+        Release release = releaseRepository.findById(PathIds.parse(releaseId, ReleaseId::of, "Release"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Release not found: " + releaseId));
 
         // Pressing毎に「購入可能な(PUBLISHEDの)Listing」だけを紐づけて画面に渡す

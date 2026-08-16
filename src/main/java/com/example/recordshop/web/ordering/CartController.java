@@ -6,6 +6,7 @@ import com.example.recordshop.domain.inventory.ListingId;
 import com.example.recordshop.domain.inventory.ListingRepository;
 import com.example.recordshop.domain.ordering.Cart;
 import com.example.recordshop.domain.ordering.CartId;
+import com.example.recordshop.domain.shared.MalformedIdentifierException;
 import com.example.recordshop.infrastructure.security.CustomerUserDetails;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * カート画面(GET/POST /cart/**)。
@@ -54,7 +56,10 @@ public class CartController {
                        RedirectAttributes redirectAttributes) {
         Cart cart = currentCart(principal, session);
 
-        Listing listing = listingRepository.findById(ListingId.of(listingId)).orElse(null);
+        // ID形式が不正な場合も「見つからなかった」と同じ扱いにする(利用者にとっては区別に意味がない)
+        Listing listing = parseListingId(listingId)
+                .flatMap(listingRepository::findById)
+                .orElse(null);
         if (listing == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "指定された商品が見つかりませんでした");
             return "redirect:/catalog";
@@ -68,8 +73,17 @@ public class CartController {
     public String remove(@AuthenticationPrincipal CustomerUserDetails principal, HttpSession session,
                           @RequestParam String listingId) {
         Cart cart = currentCart(principal, session);
-        cart.removeLine(ListingId.of(listingId));
+        parseListingId(listingId).ifPresent(cart::removeLine);
         return "redirect:/cart";
+    }
+
+    /** 不正な形式のlistingIdを例外にせず「該当なし」として扱う。 */
+    private Optional<ListingId> parseListingId(String listingId) {
+        try {
+            return Optional.of(ListingId.of(listingId));
+        } catch (MalformedIdentifierException e) {
+            return Optional.empty();
+        }
     }
 
     /** セッションに保持中の Cart を返す。無ければログイン中の顧客用に新規作成する。 */

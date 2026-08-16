@@ -4,6 +4,7 @@ import com.example.recordshop.domain.ordering.Order;
 import com.example.recordshop.domain.ordering.OrderId;
 import com.example.recordshop.domain.ordering.OrderRepository;
 import com.example.recordshop.infrastructure.security.CustomerUserDetails;
+import com.example.recordshop.web.PathIds;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,7 +34,7 @@ public class OrderHistoryController {
     @GetMapping("/orders/{orderId}")
     public String detail(@AuthenticationPrincipal CustomerUserDetails principal,
                           @PathVariable String orderId, Model model) {
-        Order order = orderRepository.findById(OrderId.of(orderId))
+        Order order = orderRepository.findById(PathIds.parse(orderId, OrderId::of, "Order"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found: " + orderId));
 
         // 他人の注文詳細URLを直接叩かれても中身を見せない(所有者チェック)
