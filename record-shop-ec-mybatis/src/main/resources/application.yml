@@ -1,0 +1,50 @@
+# server.forward-headers-strategy はあえて使わない(=デフォルトのnone)。
+# CloudFront(HTTPS)→ALB→Fargate(HTTP)構成ではALBがX-Forwarded-Protoを毎回上書きしてしまうため、
+# 代わりにCloudFrontProtoFilter(infrastructure.web)でscheme/isSecureを直接上書きする。
+
+spring:
+  application:
+    name: record-shop-ec-mybatis
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:recordshop_mybatis}
+    username: ${DB_USERNAME:recordshop}
+    password: ${DB_PASSWORD:recordshop}
+  sql:
+    init:
+      # 簡略化のため、起動のたびにschema.sqlでテーブルを作り直す(データは永続化しない)
+      mode: always
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-handlers-package: com.example.recordshop.infrastructure.mybatis
+  configuration:
+    map-underscore-to-camel-case: true
+    # 発行されるSQLをログで確認できるようにしておく(N+1になっていないかの目視確認用)
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  level:
+    com.example.recordshop.infrastructure.mybatis: debug
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # ALB/ECSのヘルスチェックが叩く /actuator/health のみ公開する
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+app:
+  admin:
+    # 起動時に管理者アカウントを1件だけ起票する(AdminAccountSeeder)。
+    # 未設定のままだと /admin/** に入れる会員が誰もいない状態になる。
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+  mail:
+    # 確認コード・登録完了メールの送信元(SESで送信検証済みのメールアドレスである必要がある)。
+    # SESサンドボックス中は宛先側も検証済みである必要がある。
+    from-address: ${MAIL_FROM_ADDRESS:no-reply@example.com}
+    aws:
+      region: ${AWS_SES_REGION:ap-northeast-1}

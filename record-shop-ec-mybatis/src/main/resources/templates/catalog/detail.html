@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${release.title} + ' - Record Shop'">作品詳細 - Record Shop</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main>
+    <p><a th:href="@{/catalog}">&larr; 商品一覧に戻る</a></p>
+
+    <h1 th:text="${release.title}">タイトル</h1>
+    <p class="muted">
+        <span th:text="${release.artistName}">アーティスト</span> ・
+        <span th:text="${release.originalReleaseYear}">1970</span> ・
+        <span th:each="genre, iter : ${release.genres}">
+            <span th:text="${genre}">Jazz</span><span th:if="${!iter.last}">, </span>
+        </span>
+    </p>
+    <img class="artwork-hero" th:if="${release.artworkUrl}" th:src="${release.artworkUrl}" alt="ジャケット画像"/>
+
+    <div class="card" th:each="entry : ${pressingListings}">
+        <h3 th:text="${entry.key.labelName} + ' / ' + ${entry.key.catalogNumber}">レーベル / 品番</h3>
+        <p class="muted">
+            <span th:text="${entry.key.country}">US</span> ・
+            <span th:text="${entry.key.pressYear}">1959</span>年プレス
+            <span th:if="${entry.key.reissue}">(reissue)</span>
+        </p>
+        <img class="artwork-preview" th:if="${entry.key.artworkUrl}" th:src="${entry.key.artworkUrl}" alt="この版のジャケット画像"/>
+
+        <p class="muted" th:if="${#lists.isEmpty(entry.value)}">現在購入可能な出品はありません。</p>
+
+        <table class="simple" th:if="${!#lists.isEmpty(entry.value)}">
+            <thead>
+            <tr>
+                <th>コンディション</th>
+                <th>価格</th>
+                <th>在庫</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="listing : ${entry.value}">
+                <td th:text="${listing.conditionType}">NEW</td>
+                <td th:text="${listing.price}">JPY 4200</td>
+                <td th:text="${listing.conditionType.name() == 'NEW'} ? ${listing.stockQuantity} : '1点限り'">5</td>
+                <td>
+                    <form th:action="@{/cart/add}" method="post" style="display:flex; gap:0.4rem; align-items:center;">
+                        <input type="hidden" name="listingId" th:value="${listing.listingId}"/>
+                        <input type="number" name="quantity" value="1" min="1"
+                               th:max="${listing.conditionType.name() == 'NEW'} ? ${listing.stockQuantity} : 1"
+                               style="width:4rem; padding:0.35rem;"/>
+                        <button type="submit" class="btn-secondary">カートに追加</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

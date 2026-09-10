@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: recordshop_mybatis
+      POSTGRES_USER: recordshop
+      POSTGRES_PASSWORD: recordshop
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-mybatis-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recordshop -d recordshop_mybatis"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "8081:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: recordshop_mybatis
+      DB_USERNAME: recordshop
+      DB_PASSWORD: recordshop
+      # ローカル検証用の管理者アカウント(本番はSecrets Manager経由で別途設定)。
+      # SampleDataSeederが投入するサンプル顧客アカウントとパスワードを揃えている。
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: Passw0rd!2024
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-mybatis-data:

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>カート - Record Shop</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main>
+    <h1>カート</h1>
+
+    <p class="error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
+    <p class="muted" th:if="${#lists.isEmpty(lines)}">
+        カートは空です。<a th:href="@{/catalog}">商品一覧</a>から追加してください。
+    </p>
+
+    <div class="card" th:if="${!#lists.isEmpty(lines)}">
+        <table class="simple">
+            <thead>
+            <tr>
+                <th>作品</th>
+                <th>コンディション</th>
+                <th>単価</th>
+                <th>数量</th>
+                <th>小計</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="line : ${lines}">
+                <td>
+                    <div th:text="${line.releaseTitle}">タイトル</div>
+                    <div class="muted" th:text="${line.artistName} + ' / ' + ${line.catalogNumber}">アーティスト</div>
+                </td>
+                <td th:text="${line.conditionType}">NEW</td>
+                <td th:text="${line.unitPrice}">JPY 4200</td>
+                <td th:text="${line.quantity}">1</td>
+                <td th:text="${line.lineTotal}">JPY 4200</td>
+                <td>
+                    <form th:action="@{/cart/remove}" method="post">
+                        <input type="hidden" name="listingId" th:value="${line.listingId}"/>
+                        <button type="submit" class="btn-secondary">削除</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <p style="text-align:right; margin-top:1rem;">
+            合計: <strong th:text="${total}">JPY 0</strong>
+        </p>
+        <p style="text-align:right;">
+            <a class="btn" th:href="@{/checkout}">レジに進む</a>
+        </p>
+    </div>
+</main>
+</body>
+</html>

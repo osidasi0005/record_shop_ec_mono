@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.recordshop.infrastructure.mybatis.ListingMapper">
+
+    <resultMap id="listingRowMap" type="com.example.recordshop.infrastructure.mybatis.ListingRow">
+        <constructor>
+            <idArg column="id" javaType="java.util.UUID"/>
+            <arg column="pressing_id" javaType="java.util.UUID"/>
+            <arg column="condition_type" javaType="string"/>
+            <arg column="price_amount" javaType="java.math.BigDecimal"/>
+            <arg column="price_currency" javaType="string"/>
+            <arg column="status" javaType="string"/>
+            <arg column="stock_quantity" javaType="java.lang.Integer"/>
+            <arg column="vinyl_grade" javaType="string"/>
+            <arg column="sleeve_grade" javaType="string"/>
+            <arg column="seller_note" javaType="string"/>
+            <!-- versionはListingRowでprimitive long。MyBatisのjavaType別名は"long"=Long(ラッパー)、
+                 "_long"=long(プリミティブ)を指す。recordの正準コンストラクタと型を一致させるため
+                 "_long"を使う(int/booleanも同様、"_"無しだとラッパー型になりgetDeclaredConstructorが
+                 見つからずNoSuchMethodExceptionになる)。 -->
+            <arg column="version" javaType="_long"/>
+        </constructor>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.recordshop.infrastructure.mybatis.ListingRow">
+        INSERT INTO listings (id, pressing_id, condition_type, price_amount, price_currency, status,
+                               stock_quantity, vinyl_grade, sleeve_grade, seller_note, version)
+        VALUES (#{id}, #{pressingId}, #{conditionType}, #{priceAmount}, #{priceCurrency}, #{status},
+                #{stockQuantity}, #{vinylGrade}, #{sleeveGrade}, #{sellerNote}, #{version})
+    </insert>
+
+    <select id="selectById" resultMap="listingRowMap">
+        SELECT id, pressing_id, condition_type, price_amount, price_currency, status,
+               stock_quantity, vinyl_grade, sleeve_grade, seller_note, version
+        FROM listings WHERE id = #{id}
+    </select>
+
+    <select id="selectByPressingId" resultMap="listingRowMap">
+        SELECT id, pressing_id, condition_type, price_amount, price_currency, status,
+               stock_quantity, vinyl_grade, sleeve_grade, seller_note, version
+        FROM listings WHERE pressing_id = #{pressingId}
+    </select>
+
+    <!-- 楽観ロックの要。WHERE句のversion一致が失敗の目印になり、version = version + 1で更新する -->
+    <update id="update" parameterType="com.example.recordshop.infrastructure.mybatis.ListingRow">
+        UPDATE listings
+        SET condition_type = #{conditionType},
+            price_amount   = #{priceAmount},
+            price_currency = #{priceCurrency},
+            status         = #{status},
+            stock_quantity = #{stockQuantity},
+            vinyl_grade    = #{vinylGrade},
+            sleeve_grade   = #{sleeveGrade},
+            seller_note    = #{sellerNote},
+            version        = version + 1
+        WHERE id = #{id} AND version = #{version}
+    </update>
+
+</mapper>
