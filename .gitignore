@@ -1,0 +1,17 @@
+# Java / Maven (record-shop-ec-mybatis)
+record-shop-ec-mybatis/target/
+*.class
+.idea/
+*.iml
+
+# CDK / Node (record-shop-ec-cdk)
+record-shop-ec-cdk/node_modules/
+record-shop-ec-cdk/cdk.out/
+record-shop-ec-cdk/.cdk.staging/
+record-shop-ec-cdk/**/*.js
+!record-shop-ec-cdk/jest.config.js
+record-shop-ec-cdk/**/*.d.ts
+
+# OS
+.DS_Store
+Thumbs.db
