@@ -1,0 +1,196 @@
+name: deploy-stage (Stage への自動反映)
+
+# main への push で起動する。イメージを焼いて stage アカウントの ECR へ push し、
+# record-shop-ec-cdk で cdk deploy する。staging Environment には承認ゲート
+# (required reviewers)を付けない前提なので、main マージからここまで人を介さない。
+#
+# workflow_dispatch は、わざと壊した任意の ref を stage へ出すためだけの入口
+# (スモーク失敗時のロールバックが実際に効くかを、意図的に壊して確かめる用途)。
+# 通常のリリースでは使わない。stage 専用で、promote-prod.yml には同じ入力を作らない。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      app_ref:
+        description: >-
+          【テスト専用・stage のみ】焼く対象の ref(ブランチ/タグ/SHA)。
+          空なら既定ブランチ(main)。イメージは test- 接頭辞のタグで push する。
+          普段は空のままにする
+        required: false
+        default: ""
+
+# **このワークフローは main ブランチのワークフローとして起動すること。**
+# workflow_dispatch で起動するときも、実行対象のブランチは main のままにする
+# (焼く対象の ref は app_ref 入力で別に渡す。壊れた ref を直接ブランチとして
+# 起動する形にはしない)。
+#
+# ECR push ロールの信頼条件(OIDC の sub)は「ワークフローを起動したブランチ」で決まり、
+# ref:refs/heads/main でないと AssumeRoleWithWebIdentity で弾かれる。
+# **弾かれるのが正しい**(壊れたブランチ側からロールを引けてしまうと、
+# push ロールを「main への push だけ信頼する」に絞った意味が無くなる)。
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-stage
+  cancel-in-progress: false
+
+jobs:
+  build-and-push:
+    name: イメージを焼いて stage へ push する
+    runs-on: ubuntu-latest
+    # **Environment を使わない。** 承認ゲートを通らないジョブに強い権限を持たせない、
+    # という設計の裏返しとして、このジョブは environment: を宣言しない
+    # (このロールが Environment を通らずに引ける唯一の例外である理由は下のコメント)。
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      image-tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.app_ref }}
+
+      - name: タグを決める
+        id: tag
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          if [ -n "${{ inputs.app_ref }}" ]; then
+            echo "tag=test-${sha}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${sha}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # **このロールは stage アカウントにしか作らない(infra 側の github-oidc.yaml の
+      # record-shop-ec-github-ecr-push)。権限は ECR の 1 リポジトリへの push だけ
+      # (ecr:GetAuthorizationToken / PutImage / InitiateLayerUpload / UploadLayerPart /
+      # CompleteLayerUpload / BatchCheckLayerAvailability)。CloudFormation・ECS などへの
+      # 書き込みは一切付けない(デプロイ本体は次のジョブの staging デプロイ用ロールが行う)。
+      #
+      # **信頼する sub は ref:refs/heads/main だけ。pull_request は信頼しない。**
+      # PR を開いただけで AWS へ書き込める経路にはしない。main への push は
+      # Ruleset(PR 必須・必須チェック)を通らないと起きないので、ECR への push は
+      # 「CI が緑になった差分」に限られる。
+      #
+      # **ECR リポジトリはタグをイミュータブルにして作る**(infra 側の
+      # ecr-repository.yaml)。同じ SHA タグの上書きを ECR 側で拒否させ、このロールが
+      # 漏れても「検証済みの SHA と同じタグで別の中身を置く」ことはできないようにする。
+      - name: AWS を OIDC で認証する(ECR push 専用ロール)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ECR_PUSH_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-${{ github.run_id }}
+
+      - name: ECR にログインする
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # **build once, deploy many。** ここで焼いて push したイメージ(SHA タグ、または
+      # workflow_dispatch なら test- 接頭辞のタグ)を、以降 Stage・本番へそのまま載せる。
+      # 同じ SHA のイメージをここから先で焼き直すことはない。
+      - name: イメージを焼いて push する
+        working-directory: record-shop-ec-mybatis
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          docker build -t "${REGISTRY}/record-shop-ec-mybatis:${TAG}" .
+          docker push "${REGISTRY}/record-shop-ec-mybatis:${TAG}"
+
+  deploy:
+    name: Stage へデプロイする
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    # staging Environment には承認ゲート(required reviewers)を付けない。
+    # main への push で、ここまで人を介さずに進む。
+    environment: staging
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      # このリポジトリはモノレポなので、別リポジトリの checkout は不要
+      # (record-shop-ec-cdk は既にこの checkout の中にある)。
+      - uses: ./.github/actions/setup-aws
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          # 既定の 3600 秒(1 時間)では、VPC + NAT + RDS + ECS + ALB + CloudFront を
+          # 一式まとめて作る初回デプロイに足りないことがあるため、余裕を持たせる。
+          # 2 回目以降(差分だけの更新)はもっと短時間で終わる。
+          role-duration-seconds: 7200
+
+      # イメージ参照はコンテキスト imageRef で渡す(SHA タグ、または test- 接頭辞のタグ)。
+      # スタック側は ecs.ContainerImage.fromEcrRepository(repository, imageRef) で、
+      # 既存の ECR イメージをタグ指定でそのまま参照する。
+      # **テストは CI(ci.yml)で済んでいるので、ここでは再実行しない。**
+      #
+      # CDK bootstrap は済んでいる前提(この構成では手元から一度だけ流す)。
+      # cdk-outputs.json はこのジョブのランナー内だけで使う一時ファイルで、コミットしない。
+      - name: cdk deploy する
+        working-directory: record-shop-ec-cdk
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+        run: |
+          set -euo pipefail
+          npx cdk deploy RecordShopEcMybatisCdkStackStage \
+            --context env=stage \
+            --context imageRef="$IMAGE_TAG" \
+            --require-approval never \
+            --outputs-file cdk-outputs.json
+
+      - name: スモークテスト
+        id: smoke
+        working-directory: record-shop-ec-cdk
+        run: |
+          set -euo pipefail
+          service_url="$(jq -r '.[].ServiceUrl' cdk-outputs.json)"
+          if [ -z "$service_url" ] || [ "$service_url" = "null" ]; then
+            echo "::error::cdk-outputs.json から ServiceUrl を取得できません"
+            exit 1
+          fi
+          echo "service-url=${service_url}" >> "$GITHUB_OUTPUT"
+          # CloudFront・ECS のヘルスチェックが安定するまで待つため retry を使う。
+          body="$(curl -fsS --retry 10 --retry-delay 15 --retry-all-errors "${service_url}/actuator/health")"
+          echo "$body"
+          case "$body" in
+            *'"status":"UP"'*) echo "OK: ヘルスチェックが UP を返しています" ;;
+            *) echo "::error::ヘルスチェックが UP を返していません: ${body}"; exit 1 ;;
+          esac
+
+      - name: 結果を要約する
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+          SERVICE_URL: ${{ steps.smoke.outputs.service-url }}
+        run: |
+          {
+            echo "## Stage デプロイ完了"
+            echo ""
+            echo "- imageRef: \`${IMAGE_TAG}\`"
+            echo "- ServiceUrl: ${SERVICE_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # **ECS のサーキットブレーカー(rollback: true。スタック側で設定済み)により、
+      # 新しいタスクが起動しない・タスクレベルのヘルスチェックを通らない場合は、
+      # ECS 自身が前のタスク定義へ自動で戻す。その場合は cdk deploy 自体が
+      # 失敗して、このジョブがここまで進まずに止まる。
+      #
+      # **スモーク(ここでの /actuator/health 確認)が落ちた場合は自動では戻さない。**
+      # ECS から見れば「新しいタスクは起動しヘルスチェックも通った」状態であり得るため
+      # (アプリ層の不具合はサーキットブレーカーの対象外)。この場合は通知メール
+      # (GitHub Actions の失敗通知)を見て、前回の imageRef を確認したうえで、
+      # workflow_dispatch の app_ref は使わず、手元(または前回の imageRef を指定した
+      # 手動の cdk deploy)でロールバックする。
+      # Blue/Green デプロイと「中身で控えるロールバック」の自動化は次の段階で入れる。
+      - name: スモーク失敗時の対応(コメントのみ・自動ロールバックしない)
+        if: failure()
+        run: |
+          echo "::error::スモークテストが失敗しました。ECS のサーキットブレーカーは効いていません(タスクは起動できているため)。"
+          echo "::error::前回の imageRef で、workflow_dispatch の app_ref は使わずに手動で cdk deploy し直してください。"
