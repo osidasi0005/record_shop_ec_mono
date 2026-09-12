@@ -6,7 +6,7 @@ WORKDIR /workspace
 # (pom.xml が変わらない限り、ソース変更のたびに毎回全依存をダウンロードし直さずに済む)
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
-RUN ./mvnw -q dependency:go-offline
+RUN chmod +x mvnw && ./mvnw -q dependency:go-offline
 
 COPY src/ src/
 RUN ./mvnw -q package -DskipTests
