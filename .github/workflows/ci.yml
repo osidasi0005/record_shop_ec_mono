@@ -1,0 +1,148 @@
+name: CI
+
+# PR と main への push で回す。
+# 「ビルドとテスト」「インフラのビルドとテスト」を main へのマージ条件にする
+# (Ruleset の Required status checks)。
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# 既定の write を落とす。CI は読むだけでよい。
+permissions:
+  contents: read
+
+# 同じ PR に続けて push したら、古い実行は止める。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# **モノレポだが path filter は付けない。** 2 つのサブプロジェクトを合わせても
+# ビルド・テストは数分で終わる規模で、path filter を足す運用コスト
+# (アプリとインフラの依存関係を見落として片方だけ検査漏れになる事故)のほうが高くつく。
+# 小さいうちは「毎回全部回す」を維持し、時間が掛かるようになったら見直す。
+
+jobs:
+  # ---------------------------------------------------------------------
+  # アプリ側(record-shop-ec-mybatis): Spring Boot 3.5 / Java 21 / Maven
+  # ---------------------------------------------------------------------
+  build:
+    name: ビルドとテスト
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # git 経由で取り込んだファイルは実行権限が落ちていることがあるため、
+      # 無条件に付け直す(既に付いていれば no-op)。
+      - name: mvnw に実行権限を付ける
+        working-directory: record-shop-ec-mybatis
+        run: chmod +x mvnw
+
+      # テストは H2(PostgreSQL 互換モード)を使う設定になっているため、
+      # DB サービスコンテナは不要。
+      - name: ビルドとテスト
+        working-directory: record-shop-ec-mybatis
+        run: ./mvnw -B verify
+
+      - name: テスト結果を残す
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mybatis-surefire-reports
+          path: record-shop-ec-mybatis/target/surefire-reports
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------
+  # インフラ側(record-shop-ec-cdk): CDK v2 / TypeScript
+  # ---------------------------------------------------------------------
+  infra:
+    name: インフラのビルドとテスト
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # **Node のバージョンは .nvmrc が正。** ここに直接書くと上げ忘れる場所が散らばる。
+          node-version-file: record-shop-ec-cdk/.nvmrc
+          cache: npm
+          cache-dependency-path: record-shop-ec-cdk/package-lock.json
+
+      - working-directory: record-shop-ec-cdk
+        run: npm ci
+
+      - name: 型チェック
+        working-directory: record-shop-ec-cdk
+        run: npm run build
+
+      - name: スタックのテスト
+        working-directory: record-shop-ec-cdk
+        run: npm test
+
+      # synth は AWS 資格情報を必要としない(env-agnostic なスタックのため)。
+      # スタックは env(prod/stage)と imageRef(ECR の既存イメージ参照)のコンテキストを
+      # 必須にする作りのため、CI では stage 相当のプレースホルダ値を渡して合成する。
+      - name: 合成できること
+        working-directory: record-shop-ec-cdk
+        run: npx cdk synth --context env=stage --context imageRef=ci-placeholder --quiet
+
+      # 「デプロイ時にしか失敗しない」ものを、synth 済みテンプレートの段階で捕まえる。
+      # IAM ロールや SecurityGroup の説明文に非 ASCII 文字があると、synth も型チェックも
+      # 通るのに CloudFormation が実行時に弾く。(参照実装: audio-shop-ec-cdk/.github/workflows/ci.yml)
+      - name: 生成テンプレートの説明文に非 ASCII 文字が無いこと
+        working-directory: record-shop-ec-cdk
+        run: |
+          node -e "
+            const fs = require('fs');
+            const files = fs.readdirSync('cdk.out').filter(f => f.endsWith('.template.json'));
+            const KEYS = ['Description', 'GroupDescription'];
+            const bad = [];
+            for (const f of files) {
+              const t = JSON.parse(fs.readFileSync('cdk.out/' + f, 'utf8'));
+              for (const [id, res] of Object.entries(t.Resources || {})) {
+                const p = res.Properties || {};
+                for (const k of KEYS) {
+                  if (typeof p[k] === 'string' && /[^\x00-\x7F]/.test(p[k])) bad.push(f + '  ' + id + '.' + k + ' = ' + p[k]);
+                }
+                for (const rule of [].concat(p.SecurityGroupIngress || [], p.SecurityGroupEgress || [])) {
+                  if (rule && typeof rule.Description === 'string' && /[^\x00-\x7F]/.test(rule.Description)) {
+                    bad.push(f + '  ' + id + ' のルール = ' + rule.Description);
+                  }
+                }
+              }
+            }
+            if (bad.length) {
+              console.error('::error::IAM / SecurityGroup の説明文に非 ASCII 文字があります。synth は通りますがデプロイで失敗します。');
+              bad.forEach(b => console.error(b));
+              process.exit(1);
+            }
+            console.log('OK: 説明文はすべて ASCII です(' + files.length + ' テンプレート)');
+          "
+
+  # ---------------------------------------------------------------------
+  # イメージのビルド確認(push はしない)
+  # ---------------------------------------------------------------------
+  image:
+    name: イメージをビルドする(push しない)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # **到達形の変更点。** main マージ後の push ジョブ(未実装。deploy-stage 相当)が
+      # イメージを焼いて ECR へ push し、以降そのイメージをコミット SHA タグのまま使い回す
+      # (build once, deploy many)想定。PR の時点ではまだ承認ゲートも Ruleset も通っていないので、
+      # AWS への書き込みはまだ発生させない。ここで焼く目的は Trivy のイメージスキャン
+      # (security.yml)に実物を渡すことと、Dockerfile が壊れていないことの確認。**push はしない。**
+      - name: イメージをビルドする(push しない)
+        working-directory: record-shop-ec-mybatis
+        run: docker build -t record-shop-ec-mybatis:${{ github.sha }} .
