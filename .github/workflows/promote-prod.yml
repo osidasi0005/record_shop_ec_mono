@@ -1,0 +1,157 @@
+name: promote-prod (本番への昇格)
+
+# Stage で確認できたコミットにタグ v* を打つと起動する。**ビルドはしない。**
+# Stage に載っているのと同じイメージを、ダイジェストで同一性を確かめてから本番へ載せる。
+# タグは付け替えられるので「同じタグ」は「同じイメージ」の証明にならない —
+# 同一性はタグではなくダイジェストで確かめる。
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: promote-prod
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: 本番へ昇格する
+    runs-on: ubuntu-latest
+    # **production Environment の承認ゲートで止まる。** 承認者が確認してから進める。
+    # production Environment の Deployment branches and tags には v* を許可しておく
+    # (それ以外のブランチ・タグからは、そもそもこの Environment を通れない)。
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      # このリポジトリはモノレポなので、別リポジトリの checkout は不要
+      # (record-shop-ec-cdk は既にこの checkout の中にある)。
+      - uses: ./.github/actions/setup-aws
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          # 既定の 3600 秒(1 時間)では初回デプロイに足りないことがあるため、余裕を持たせる
+          # (deploy-stage.yml と同じ理由)。
+          role-duration-seconds: 7200
+
+      # **このタグが指すコミットの SHA タグで、stage の ECR にはすでにイメージがある**
+      # (deploy-stage.yml が main マージ後に push したもの)。まずそのダイジェストを控える。
+      - name: stage の ECR からダイジェストを取得する
+        id: stage-image
+        env:
+          STAGE_REGISTRY: ${{ vars.STAGE_ECR_REGISTRY }}
+        run: |
+          set -euo pipefail
+          sha="${GITHUB_SHA}"
+          # STAGE_ECR_REGISTRY は "アカウントID.dkr.ecr.リージョン.amazonaws.com" の形。
+          # 先頭の "." 区切り最初の要素が stage アカウント ID(ECR の registry-id)。
+          registry_id="$(echo "${STAGE_REGISTRY}" | cut -d. -f1)"
+          digest="$(aws ecr batch-get-image \
+            --repository-name record-shop-ec-mybatis \
+            --registry-id "${registry_id}" \
+            --image-ids imageTag="${sha}" \
+            --query 'images[0].imageId.imageDigest' --output text)"
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+
+      # **stage 側は読まれるだけ、prod 側は自分で書く。**
+      # pull の許可は stage の ECR のリポジトリポリシーで prod のロールに与える
+      # (infra 側の ecr-repository.yaml)。push の許可は本番側の record-shop-ec-github-deploy に
+      # identity ベースで持たせる(ecr:GetAuthorizationToken はリソースポリシーでは
+      # 代替できないため。infra 側の github-oidc.yaml を参照)。
+      - name: stage からダイジェスト指定で pull し、prod へ push する
+        env:
+          STAGE_REGISTRY: ${{ vars.STAGE_ECR_REGISTRY }}
+          PROD_REGISTRY: ${{ vars.PROD_ECR_REGISTRY }}
+          DIGEST: ${{ steps.stage-image.outputs.digest }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          set -euo pipefail
+          aws ecr get-login-password --region "${AWS_REGION}" | \
+            docker login --username AWS --password-stdin "${STAGE_REGISTRY}"
+          aws ecr get-login-password --region "${AWS_REGION}" | \
+            docker login --username AWS --password-stdin "${PROD_REGISTRY}"
+          docker pull "${STAGE_REGISTRY}/record-shop-ec-mybatis@${DIGEST}"
+          docker tag "${STAGE_REGISTRY}/record-shop-ec-mybatis@${DIGEST}" "${PROD_REGISTRY}/record-shop-ec-mybatis:${GITHUB_REF_NAME}"
+          docker push "${PROD_REGISTRY}/record-shop-ec-mybatis:${GITHUB_REF_NAME}"
+
+      # コピーしただけで安心しない。push した先のダイジェストを読み直し、
+      # stage から取ってきたダイジェストと一致することを確かめてから初めてデプロイに進む。
+      - name: push したイメージのダイジェストが一致することを確かめる
+        env:
+          EXPECTED: ${{ steps.stage-image.outputs.digest }}
+        run: |
+          set -euo pipefail
+          actual="$(aws ecr describe-images \
+            --repository-name record-shop-ec-mybatis \
+            --image-ids imageTag="${GITHUB_REF_NAME}" \
+            --query 'imageDetails[0].imageDigest' --output text)"
+          if [ "$actual" != "$EXPECTED" ]; then
+            echo "::error::ダイジェストが一致しません(stage: ${EXPECTED} / prod: ${actual})。デプロイを中止します。"
+            exit 1
+          fi
+          echo "OK: ダイジェストが一致しています(${actual})"
+
+      # イメージ参照はダイジェストで渡す(タグではない)。スタック側は
+      # ecs.ContainerImage.fromEcrRepository(repository, imageRef) が sha256: 始まりの
+      # 文字列をダイジェストとして自動判別する。**テストは CI で済んでいるので、
+      # ここでは再実行しない。**
+      #
+      # cdk-outputs.json はこのジョブのランナー内だけで使う一時ファイルで、コミットしない。
+      - name: cdk deploy する
+        working-directory: record-shop-ec-cdk
+        env:
+          DIGEST: ${{ steps.stage-image.outputs.digest }}
+        run: |
+          set -euo pipefail
+          npx cdk deploy RecordShopEcMybatisCdkStack \
+            --context env=prod \
+            --context imageRef="$DIGEST" \
+            --require-approval never \
+            --outputs-file cdk-outputs.json
+
+      - name: スモークテスト
+        id: smoke
+        working-directory: record-shop-ec-cdk
+        run: |
+          set -euo pipefail
+          service_url="$(jq -r '.[].ServiceUrl' cdk-outputs.json)"
+          if [ -z "$service_url" ] || [ "$service_url" = "null" ]; then
+            echo "::error::cdk-outputs.json から ServiceUrl を取得できません"
+            exit 1
+          fi
+          echo "service-url=${service_url}" >> "$GITHUB_OUTPUT"
+          # CloudFront・ECS のヘルスチェックが安定するまで待つため retry を使う。
+          body="$(curl -fsS --retry 10 --retry-delay 15 --retry-all-errors "${service_url}/actuator/health")"
+          echo "$body"
+          case "$body" in
+            *'"status":"UP"'*) echo "OK: ヘルスチェックが UP を返しています" ;;
+            *) echo "::error::ヘルスチェックが UP を返していません: ${body}"; exit 1 ;;
+          esac
+
+      - name: 結果を要約する
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          DIGEST: ${{ steps.stage-image.outputs.digest }}
+          SERVICE_URL: ${{ steps.smoke.outputs.service-url }}
+        run: |
+          {
+            echo "## 本番への昇格完了"
+            echo ""
+            echo "- タグ: \`${TAG_NAME}\`"
+            echo "- ダイジェスト: \`${DIGEST}\`"
+            echo "- ServiceUrl: ${SERVICE_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # スモークが落ちた場合の方針は deploy-stage.yml と同じ(自動では戻さない)。
+      # ここまで来て失敗するのは「ダイジェストは一致し ECS のヘルスチェックも通ったが、
+      # アプリ層で不具合がある」ケースのため、通知を見て前回のタグで手動 cdk deploy し直す。
+      - name: スモーク失敗時の対応(コメントのみ・自動ロールバックしない)
+        if: failure()
+        run: |
+          echo "::error::スモークテストが失敗しました。前回の本番タグを確認し、手動で cdk deploy し直してください。"
