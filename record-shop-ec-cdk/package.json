@@ -5,7 +5,8 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "synth:stage": "cdk synth --context env=stage --context imageRef=local"
   },
   "devDependencies": {
     "@swc/core": "^1.15.0",
