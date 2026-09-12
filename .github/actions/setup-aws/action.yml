@@ -25,29 +25,23 @@ inputs:
 runs:
   using: composite
   steps:
-    # このファイル自身(action.yml)は <リポジトリのルート>/.github/actions/setup-aws/ にある。
-    # ハードコードせず github.action_path から3階層さかのぼって求める
-    # (setup-aws → actions → .github → <リポジトリのルート> の3段)。
-    - name: record-shop-ec-cdk のディレクトリを特定する
-      id: paths
-      shell: bash
-      run: |
-        set -euo pipefail
-        repo_root="$(cd "${{ github.action_path }}/../../.." && pwd)"
-        echo "infra_dir=${repo_root}/record-shop-ec-cdk" >> "$GITHUB_OUTPUT"
-
+    # **パスは作業ディレクトリ(checkout 先)からの相対で書く。絶対パスにしない。**
+    # `actions/setup-node` の `node-version-file` は作業ディレクトリからの相対パスとして
+    # 解決され、絶対パスを渡すと先頭に作業ディレクトリが付いて二重になる
+    # (最初の実機実行で `.../record_shop_ec_mono/home/runner/work/.../.nvmrc does not exist` で落ちた)。
+    # モノレポで cdk の場所は固定なので、github.action_path からさかのぼる細工も要らない。
     - name: Node.js を用意する
       uses: actions/setup-node@v7
       with:
         # バージョンは record-shop-ec-cdk/.nvmrc が正(呼び出し元の言語と違うことがあるので、
         # 明示的にこのパスを指す)。
-        node-version-file: ${{ steps.paths.outputs.infra_dir }}/.nvmrc
+        node-version-file: record-shop-ec-cdk/.nvmrc
         cache: npm
-        cache-dependency-path: ${{ steps.paths.outputs.infra_dir }}/package-lock.json
+        cache-dependency-path: record-shop-ec-cdk/package-lock.json
 
     - name: record-shop-ec-cdk の依存を入れる
       shell: bash
-      working-directory: ${{ steps.paths.outputs.infra_dir }}
+      working-directory: record-shop-ec-cdk
       run: npm ci
 
     # 長期のアクセスキーは置かない。ジョブごとに、期限つきの一時資格情報を取る。
