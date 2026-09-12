@@ -1,0 +1,98 @@
+# 依存の更新 PR を Dependabot に作らせる。
+#
+# Renovate ではなく Dependabot を使う。Renovate は GitHub App のインストールが要るのに対し、
+# Dependabot はこのファイルだけで動き、private リポジトリでも追加課金が無い。
+#
+# **Dependabot が作った PR では Actions の Secret が読めない**(GitHub の仕様。
+# Dependabot 専用の Secret 置き場が別にあり、通常の Secret は空になる)。
+# claude-review.yml はトークン未登録と判断してレビューをスキップし、必須チェックは
+# 緑のまま終わる(マージは止まらない)。**依存更新の PR だけは自動レビューが付かないので、
+# 目視で確認してからマージし、auto-merge の対象にもしない。**
+version: 2
+
+updates:
+  # ワークフローが使う action 自体の更新(actions/checkout@v7 など)。
+  # 放っておくと、ある日 GitHub 側で動かなくなる(Node 16 の action がそうだった)。
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # minor / patch はまとめて1本にする。major は個別の PR に分かれるので、
+      # 破壊的変更を含む1本のせいで無関係な action の更新まで足止めされることがない。
+      actions-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # アプリ本体(record-shop-ec-mybatis)の Maven 依存。
+  - package-ecosystem: maven
+    directory: /record-shop-ec-mybatis
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      maven-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      # **Spring Boot の major は個別に見て上げる。**
+      # spring-boot-starter-parent の major はマイグレーションガイドを読んで
+      # 依存全体(mybatis-spring-boot、security 設定など)の互換性を確認する作業を伴うため、
+      # Dependabot に自動で上げさせず、目視で判断する対象として個別 PR にも含めない。
+      - dependency-name: "org.springframework.boot:*"
+        update-types: ["version-update:semver-major"]
+
+  # アプリ本体(record-shop-ec-mybatis)のコンテナイメージのベース。
+  - package-ecosystem: docker
+    directory: /record-shop-ec-mybatis
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      # **eclipse-temurin の major(JDK のメジャーバージョン)は個別に見て上げる。**
+      # JDK のメジャー更新はアプリの動作確認(手元・CI 双方)を伴うため自動で上げさせない。
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
+
+  # インフラ定義(record-shop-ec-cdk)の npm 依存。
+  - package-ecosystem: npm
+    directory: /record-shop-ec-cdk
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      # **`@types/node` は Node 本体と一緒に上げる。**
+      # 型だけ先に上がると、CI の Node に存在しない API が型検査を通ってしまう
+      # (落ちるのは実行時)。Dependabot はこのずれを検知できない。
+      # 上げるときは `.nvmrc` と一緒に手で上げる。
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
