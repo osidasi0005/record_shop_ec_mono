@@ -54,6 +54,13 @@ updates:
       # Dependabot に自動で上げさせず、目視で判断する対象として個別 PR にも含めない。
       - dependency-name: "org.springframework.boot:*"
         update-types: ["version-update:semver-major"]
+      # **MyBatis のスターターの major も Dependabot に任せない。**
+      # 4.x は推移的に Spring Boot 4 の autoconfigure を引き込み、親 POM の 3.5 系と
+      # 両方がクラスパスに乗って ApplicationContext が起動できなくなる
+      # (この PR #4 で「ビルドとテスト」が実際に落ちた。参照実装でも同じ組み合わせで落ちている)。
+      # Spring Boot を上げるまで、こちらも上げられない。
+      - dependency-name: "org.mybatis.spring.boot:*"
+        update-types: ["version-update:semver-major"]
 
   # アプリ本体(record-shop-ec-mybatis)のコンテナイメージのベース。
   - package-ecosystem: docker
