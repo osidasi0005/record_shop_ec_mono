@@ -14,7 +14,7 @@ DDD 学習用レコード販売 EC サイトの 5 リポジトリを 1 つにま
 
 ## ディレクトリ名が元のリポジトリ名のままである理由
 
-`record-shop-ec-cdk` が Docker ビルドコンテキストとして `../record-shop-ec-mybatis` を参照し、`record-shop-ec-docs` が `../record-shop-ec-mybatis/...` へ相対リンクしているため。兄弟配置を保てば無修正で動く。
+`record-shop-ec-docs` が `../record-shop-ec-mybatis/...` へ相対リンクしているため。兄弟配置を保てば無修正で動く。
 
 ## ローカル起動
 
@@ -26,11 +26,21 @@ cd record-shop-ec-mybatis && docker compose up -d --build
 
 ## AWS デプロイ
 
+普段は手動でデプロイしない。CI/CD で自動的に反映される:
+
+- `main` への push → `deploy-stage.yml` がイメージを ECR へ push し、stage アカウントへ自動デプロイ
+- コミットに `v*` タグを push → `promote-prod.yml` が承認ゲートを経て、stage で確認済みのイメージ(ダイジェスト指定)をそのまま本番へ昇格(ビルドはしない)
+
+手動で流すのは初期構築の検証や、インフラ定義だけを変えた確認のとき。`env`(`prod`|`stage`)と `imageRef`(ECR に push 済みの SHA タグ、または `sha256:` ダイジェスト)のコンテキストがどちらも必須:
+
 ```
-cd record-shop-ec-cdk && npm ci && npx cdk deploy RecordShopEcMybatisCdkStack
+cd record-shop-ec-cdk && npm ci
+npx cdk deploy RecordShopEcMybatisCdkStackStage --context env=stage --context imageRef=<sha>
 ```
 
-月 $60〜90 かかるので使わないときは `npx cdk destroy`
+詳細(スタック構成、コンテキストの意味、destroy の手順)は `record-shop-ec-cdk/README.md`、AWS 側の下準備(ECR・OIDC ロール)は `record-shop-ec-cdk/infra/README.md` を参照。CI/CD の型の出典は https://github.com/osidasi0005/cicd_playbook 。
+
+月 $60〜90 かかるので使わないときは `npx cdk destroy <スタック名> --context env=<env> --context imageRef=<任意の文字列>`
 
 ## 詳細
 

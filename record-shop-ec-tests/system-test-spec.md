@@ -109,8 +109,8 @@ MyBatisリポジトリの結合テストではカバーできない、画面遷�
 | `AUTH` | [6. 権限制御テスト](#6-権限制御テスト) | 上記全画面区分 × ロール(匿名/CUSTOMER/ADMIN) | 10 |
 | `CONC` | [7. 並行実行・在庫競合テスト](#7-並行実行在庫競合テスト) | `/checkout`(同時アクセス時の楽観ロック) | 2 |
 | `PAY` | [8. 決済フローテスト](#8-決済フローテスト) | `/api/orders/{orderId}/payments`, `/api/payments/{paymentId}`, チェックアウト連動 | 4 |
-| `INFRA` | [9. インフラ・非機能テスト](#9-インフラ非機能テスト) | CloudFront/ALB/カートの非永続性/CDKデプロイ運用 | 7 |
-| **合計** | | | **68** |
+| `INFRA` | [9. インフラ・非機能テスト](#9-インフラ非機能テスト) | CloudFront/ALB/カートの非永続性/CDKデプロイ運用/CI-CDパイプライン | 12 |
+| **合計** | | | **73** |
 
 ---
 
@@ -249,6 +249,11 @@ MyBatisリポジトリの結合テストではカバーできない、画面遷�
 | ST-INFRA-005 | カートの非永続性(タスク再起動での消失) | ログイン済み、カートに商品を追加済み(ECS環境で実施) | 1. ECSサービスのタスクを再起動する(例: `aws ecs update-service --force-new-deployment`、または管理コンソールから)<br>2. 再起動完了後、同じブラウザで`/cart`へアクセスする | - | カート内容が空になっている(セッションがインメモリ保持のため、タスク入れ替わりで失われる)。ログインセッションも失われ再ログインが必要になる場合がある |
 | ST-INFRA-006 | CDKデプロイ後のURL取得 | `record-shop-ec-cdk` の実行環境が整っている | 1. `npx cdk deploy RecordShopEcMybatisCdkStack` を実行する | - | デプロイ完了後の出力に`ServiceUrl`(CloudFront URL)と`AlbDirectUrl`が表示され、そこから最新のアクセスURLを取得できる(デプロイのたびにCloudFrontドメインが変わりうる点に留意) |
 | ST-INFRA-007 | 会員登録確認メールのSES送信(AWS環境) | AWS環境がデプロイ済み。宛先メールアドレスがSESで検証済み(サンドボックスモードの制約) | 1. AWS環境上で`/register`から会員登録を行う | email=(SESで検証済みのメールアドレス) | 指定した宛先に6桁の確認コードを含むメールが実際に届く。SESサンドボックスモード中は未検証の宛先だと送信失敗する点に注意 |
+| ST-INFRA-008 | mainへのpushでstageが自動更新される | featureブランチのPRが必須チェック4つ(ビルドとテスト/インフラのビルドとテスト/イメージをビルドする(push しない)/差分レビュー)を通過し、mainへsquashマージされた直後 | 1. mainへのpushで`deploy-stage.yml`が起動することを確認する<br>2. `build-and-push`ジョブがコミットSHAタグでイメージをstage ECRへpushすることを確認する<br>3. `deploy`ジョブが`cdk deploy RecordShopEcMybatisCdkStackStage --context env=stage --context imageRef=<SHA>`を実行し、`/actuator/health`のスモークが通ることを確認する | - | `deploy-stage.yml`のbuild-and-push→deployが成功し、stage環境の`AppImageRef`出力がpushしたSHAタグと一致する。スモークが`{"status":"UP"}`を返す。**2026-09-13実施、結果PASS**(確認手段: GitHub Actionsのジョブ要約、`describe-stacks --query "Stacks[0].Outputs"`) |
+| ST-INFRA-009 | 壊れたイメージでサーキットブレーカーが戻す | stage環境が正常稼働中。起動に失敗する(または`/actuator/health`のヘルスチェックに通らない)壊れたコミットを用意している | 1. `workflow_dispatch`で`deploy-stage.yml`を起動し、`app_ref`に壊れたコミットのref(ブランチ/SHA)を指定する<br>2. `test-<SHA>`タグでイメージがpushされ、そのタグを`imageRef`に`cdk deploy`が実行されるのを確認する<br>3. CloudFormationのスタックイベント・ECSサービスイベントを確認する | app_ref=(壊れたコミットのref) | 新タスクが起動しない、またはタスクレベルのヘルスチェックに通らず、ECSのサーキットブレーカー(`circuitBreaker: { rollback: true }`)が働いて元のタスク定義へ自動的に戻る。CloudFormationのスタックステータスが`UPDATE_ROLLBACK_COMPLETE`になり、既存タスクは稼働を継続する(`cdk deploy`自体は失敗として終わる)。**2026-09-13実施、結果PASS**(確認手段: `describe-stacks --query "Stacks[0].StackStatus"`、ECSサービスイベント) |
+| ST-INFRA-010 | タグpushが承認で止まり、承認後にprodが更新される | stageで確認済みのコミットが存在する | 1. そのコミットへタグ`v*`をpushする<br>2. `promote-prod.yml`が起動し、`production` Environmentの承認待ちで停止することを確認する<br>3. 承認者(`osidasi0005`)が承認する<br>4. 承認後にジョブが進み、`cdk deploy RecordShopEcMybatisCdkStack --context env=prod --context imageRef=sha256:...`が実行され、`/actuator/health`のスモークが通ることを確認する | tag=(stageで確認済みのコミットへの`v*`タグ) | 承認前はジョブが`production` Environmentのゲートで止まり、承認者以外は進められない。承認後にprod環境へデプロイされ、スモークが`{"status":"UP"}`を返す。**2026-09-13実施、結果PASS**(確認手段: GitHub Actionsの承認待ち画面・ジョブ要約) |
+| ST-INFRA-011 | prodのイメージダイジェストがstageと一致する | ST-INFRA-010でprodへ昇格済み | 1. `promote-prod.yml`の「push したイメージのダイジェストが一致することを確かめる」ステップの結果を確認する<br>2. stage ECRとprod ECRそれぞれで対象イメージの`describe-images`を実行し、ダイジェストを突き合わせる | - | stage ECR側の対象SHAタグのダイジェストと、prod ECR側の対象`v*`タグのダイジェストが一致する。**2026-09-13実施、結果PASS**(確認手段: `describe-images --query "imageDetails[0].imageDigest"`を両アカウントで実行し比較) |
+| ST-INFRA-012 | PR時点ではECRにpushされない(資格情報を取らない) | オープン中のPRが存在し、ci.ymlの必須チェックが実行されている | 1. PRを作成し、`image`ジョブ(イメージをビルドする(push しない))の実行内容を確認する<br>2. `image`ジョブにAWS認証ステップ(`aws-actions/configure-aws-credentials`等)が無いことを確認する<br>3. マージ前の時点で、stage ECRに対象コミットのSHAタグが存在しないことを確認する | - | `image`ジョブは`docker build`のみを行いAWS資格情報を取得せず、ECRへのpushは発生しない。stage ECRに該当SHAタグが現れるのはmainへのマージ後(`deploy-stage.yml`実行後)のみである。**2026-09-13実施、結果PASS**(確認手段: ci.ymlのジョブログにAWS認証ステップが無いことの確認、`describe-images`でマージ前は該当タグが無いことを確認) |
 
 ---
 
