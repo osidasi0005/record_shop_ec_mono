@@ -33,6 +33,34 @@ npx cdk deploy RecordShopEcMybatisCdkStack --context env=prod --context imageRef
 `env`(`prod` | `stage`)と `imageRef`(ECR の SHA タグ、または `sha256:` 始まりのダイジェスト)は
 どちらも必須で、省くとエラーになる。
 
+## CI/CD から動く流れ
+
+普段はここに書いたコマンドを手で打たない。`.github/workflows/` が自動で回す:
+
+1. feature ブランチで PR を作る → 必須チェック(ビルドとテスト / インフラのビルドとテスト /
+   イメージをビルドする(push しない)/ 差分レビュー)が通ってから squash マージ(auto-merge 可)
+2. `main` への push → `deploy-stage.yml` がイメージを焼いて SHA タグで stage アカウントの ECR へ push し、
+   `RecordShopEcMybatisCdkStackStage` を `--context env=stage --context imageRef=<SHAタグ>` でデプロイ、
+   CloudFront 経由の `/actuator/health` でスモークする
+3. stage で確認できたコミットへタグ `v*` を push → `promote-prod.yml` が `production` Environment の承認を経て、
+   stage の ECR にある同じイメージをダイジェスト指定で prod の ECR へコピーし(ビルドし直さない、
+   build once, deploy many)、`RecordShopEcMybatisCdkStack` を `--context env=prod --context imageRef=sha256:...`
+   でデプロイしてスモークする
+
+手動で `npx cdk deploy` / `npx cdk diff` を流すのは、初期構築の検証や、インフラ定義(`lib/` 配下)だけを
+変えて手元で確認したいときに限る。イメージを先に ECR へ push しておく必要がある点は変わらない。
+
+## destroy の手順
+
+```sh
+npx cdk destroy <スタック名> --context env=<env> --context imageRef=<任意の文字列>
+```
+
+`imageRef` はスタックの合成に必須なコンテキストなので、destroy 時も何か値を渡す(実在するイメージ参照でなくてよい)。
+ECR リポジトリ(`infra/ecr-repository.yaml`)と OIDC ロール(`infra/github-oidc.yaml`)はこのスタックの外の
+別スタックで、いずれも `DeletionPolicy: Retain` のため、上記の destroy では消えずに残る(消し方は
+[`infra/README.md`](infra/README.md#消し方) を参照)。
+
 ## Useful commands
 
 * `npm run build`   type-check the project

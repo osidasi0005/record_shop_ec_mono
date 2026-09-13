@@ -28,7 +28,7 @@ graph TB
 
         SecretsAdmin["Secrets Manager<br/>AdminPassword"]
         SecretsRDS["Secrets Manager<br/>RDS認証情報(自動生成)"]
-        ECR["ECR<br/>Dockerイメージ"]
+        ECR["ECR<br/>Dockerイメージ<br/>(このスタックの外。infra/ecr-repository.yamlで作成)"]
         CWLogs["CloudWatch Logs"]
     end
 
@@ -51,9 +51,9 @@ graph TB
     class RDS,SecretsAdmin,SecretsRDS data
 ```
 
-CDK上は`bin/record-shop-ec-cdk.ts`がこのスタックを定義しており、
-`npx cdk deploy RecordShopEcMybatisCdkStack` / `npx cdk destroy RecordShopEcMybatisCdkStack`
-でデプロイ・削除できる。
+CDK上は`bin/record-shop-ec-cdk.ts`がこのスタックを定義しており、コンテキスト`env`(`prod`|`stage`)と
+`imageRef`(ECRの既存イメージ参照)を指定して`npx cdk deploy RecordShopEcMybatisCdkStack --context env=prod --context imageRef=<sha256:...>`
+のようにデプロイ・削除できる。ただし普段はこれを手で打たず、後述のCI/CDから自動的に反映される。
 
 ## リクエストフロー(HTTPS化の仕組み)
 
@@ -90,11 +90,49 @@ sequenceDiagram
 [`CloudFrontProtoFilter.java`](../record-shop-ec-mybatis/src/main/java/com/example/recordshop/infrastructure/web/CloudFrontProtoFilter.java)
 (アプリ側の対応フィルタ)。
 
+## CI/CDとマルチアカウント構成
+
+prodとstageは別のAWSアカウント。スタック自体(上の全体構成図)は両アカウントで同一の作りで、
+環境ごとに変わるのはスタック名とロール名だけ(`RecordShopEcMybatisCdkStack` / `RecordShopEcMybatisCdkStackStage`、
+タスクロール`record-shop-ec-task-<env>` / 実行ロール`record-shop-ec-exec-<env>`)。
+
+イメージ用のECRリポジトリと、GitHub ActionsがAWSをOIDCで触るためのロールは、このCDKスタックの外
+(`record-shop-ec-cdk/infra/`配下、別のCloudFormationテンプレート)で両アカウントに1回ずつ作る:
+
+| リソース | 役割 |
+|---|---|
+| ECRリポジトリ`record-shop-ec-mybatis`(両アカウント) | アプリイメージの保管(イミュータブル、`DeletionPolicy: Retain`、スタックの外)。stage側のリポジトリポリシーで、prodのデプロイロールにpullを許可 |
+| デプロイロール`record-shop-ec-github-deploy`(両アカウント) | `staging` / `production`のEnvironmentを信頼し、`cdk deploy`を実行する |
+| ECR pushロール`record-shop-ec-github-ecr-push`(stageのみ) | `main`へのpush(`ref:refs/heads/main`)だけを信頼し、ECRへのpushだけを許可(CloudFormation・ECSへの権限は持たない) |
+
+```mermaid
+flowchart LR
+    PR["PR(featureブランチ)"] -->|"必須チェック4つ通過後<br/>squashマージ"| Main["mainへpush"]
+    Main -->|"deploy-stage.yml<br/>ECR pushロール(OIDC)"| StageECR["stage ECR<br/>SHAタグでpush"]
+    StageECR -->|"cdk deploy<br/>--context env=stage"| Stage["stage環境<br/>(検証用アカウント)"]
+    Stage -->|"/actuator/healthで<br/>スモーク"| StageOK["stage確認OK"]
+    StageOK -->|"タグ v* をpush"| Promote["promote-prod.yml起動"]
+    Promote -->|"production Environmentの<br/>承認ゲート"| Approve["承認"]
+    Approve -->|"stage ECRからダイジェスト指定でpull<br/>→ prod ECRへpush<br/>→ ダイジェスト一致を確認"| ProdECR["prod ECR"]
+    ProdECR -->|"cdk deploy<br/>--context env=prod"| Prod["prod環境<br/>(本番用アカウント)"]
+    Prod -->|"/actuator/healthで<br/>スモーク"| ProdOK["本番反映完了"]
+```
+
+**ロールバック**: ECSのサーキットブレーカー(`circuitBreaker: { rollback: true }`。上の全体構成図の
+Fargateサービスに設定済み)により、新しいタスク定義が起動しない・タスクレベルのヘルスチェックを
+通らない場合はECS自身が前のタスク定義へ自動的に戻す(この場合`cdk deploy`自体が失敗して止まる)。
+一方、スモークテスト(`/actuator/health`)が落ちるケース(タスクは起動しヘルスチェックも通ったが
+アプリ層に不具合がある場合)は自動では戻らないため、通知を見て手動で前回の`imageRef`を指定して
+`cdk deploy`し直す運用。Blue/Greenデプロイとアラームは未導入。
+
+型の出典: [cicd_playbook](https://github.com/osidasi0005/cicd_playbook)(`docs/pipeline.md`、`docs/decisions.md`)。
+
 ## 主要リソースの設定値
 
 | リソース | 設定 | 理由・備考 |
 |---|---|---|
 | VPC | 2 AZ、NATゲートウェイ1個 | コスト最小化(NATは1個あたり時間課金) |
+| ECS デプロイ | ローリング更新 + サーキットブレーカー(`rollback: true`)、`minHealthyPercent: 100` / `maxHealthyPercent: 200`、`deregistrationDelay: 30秒` | 新タスクが起動できない場合はECS自身が前のタスク定義へ自動的に戻す(→上の「CI/CDとマルチアカウント構成」) |
 | RDS | PostgreSQL 16、db.t4g.micro、20GB、`publiclyAccessible: false` | 学習用途で`removalPolicy: DESTROY`(destroy時にDBごと削除) |
 | ECS Fargate | 0.25vCPU / 0.5GB、`desiredCount: 1` | コスト最小化。`healthCheckGracePeriod: 300秒`(起動に90秒前後かかるため) |
 | ALBヘルスチェック | `/actuator/health`、`healthyThresholdCount: 2` | デフォルトの5だと猶予期間を圧迫しクラッシュループを起こしたため調整 |
